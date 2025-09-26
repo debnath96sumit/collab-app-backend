@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Collaboration Test</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-size: 16px;
+    }
+    #log {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+      height: 150px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Collaboration Test</h1>
+
+  <label for="docId">Document ID:</label>
+  <input type="text" id="docId" value="doc-123">
+  <button onclick="joinDocument()">Join Document</button>
+
+  <h3>Editor</h3>
+  <textarea id="editor" oninput="sendEdit(this.value)"></textarea>
+
+  <h3>Logs</h3>
+  <div id="log"></div>
+
+  <script>
+    const socket = io('http://localhost:3000'); // ✅ connect to NestJS WS
+    
+    function log(message) {
+      const logDiv = document.getElementById('log');
+      logDiv.innerHTML += `<div>${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function joinDocument() {
+      const docId = document.getElementById('docId').value;
+      socket.emit('joinDocument', docId);
+      log(`Joined document: ${docId}`);
+    }
+
+    function sendEdit(newContent) {
+      const docId = document.getElementById('docId').value;
+      socket.emit('editDocument', { docId, content: newContent });
+      log(`You edited: ${newContent}`);
+    }
+
+    socket.on('joined', (data) => {
+      log(`✅ Server confirmed join: ${JSON.stringify(data)}`);
+    });
+
+    socket.on('documentUpdated', (content) => {
+      document.getElementById('editor').value = content;
+      log(`📩 Update received: ${content}`);
+    });
+    socket.on('connected', (data) => {
+      log(`✅ Server confirmed connection: ${JSON.stringify(data)}`);
+    })
+  </script>
+</body>
+</html>
