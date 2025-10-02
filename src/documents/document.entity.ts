@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { DocumentVersion } from './document-version.entity';
-
+import { User } from '../users/user.entity';
 @Entity()
 export class Document {
   @PrimaryGeneratedColumn('uuid')
@@ -29,4 +31,10 @@ export class Document {
     cascade: true,
   })
   versions: DocumentVersion[];
+  @ManyToOne(() => User, (user) => user.documents, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'owner_id' })
+  owner: User;
+
+  @Column({ nullable: true })
+  owner_id: number;
 }

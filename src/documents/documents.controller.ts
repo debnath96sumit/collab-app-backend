@@ -6,16 +6,21 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('documents')
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(private readonly documentsService: DocumentsService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.documentsService.findAll();
+  findAll(@Req() req) {
+    const userId = req.user.userId as number;
+    return this.documentsService.findAllByParams({ where: { owner_id: userId } });
   }
 
   @Get(':id')
@@ -23,9 +28,14 @@ export class DocumentsController {
     return this.documentsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body('title') title: string) {
-    return this.documentsService.create(title);
+  create(@Body('title') title: string, @Req() req) {
+    const userId = req.user.userId as number;
+    return this.documentsService.create({
+      title,
+      owner_id: userId,
+    });
   }
 
   @Put(':id')

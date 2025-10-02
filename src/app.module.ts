@@ -6,8 +6,13 @@ import { BullModule } from '@nestjs/bullmq';
 import { DocumentsModule } from './documents/documents.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
 import { DocumentProcessor } from './queues/document.processor';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // so we don’t need to import in every module
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -26,6 +31,7 @@ import { DocumentProcessor } from './queues/document.processor';
     }),
     DocumentsModule,
     CollaborationModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, DocumentProcessor],

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { Document } from './document.entity';
 
 @Injectable()
@@ -10,16 +10,15 @@ export class DocumentsService {
     private readonly documentRepo: Repository<Document>,
   ) {}
 
-  findAll() {
-    return this.documentRepo.find();
+  findAllByParams(params: FindManyOptions<Document>) {
+    return this.documentRepo.find(params);
   }
 
   findOne(id: string) {
     return this.documentRepo.findOneBy({ id });
   }
 
-  create(title: string) {
-    const doc = this.documentRepo.create({ title });
+  create(doc: Partial<Document>) {
     return this.documentRepo.save(doc);
   }
 
