@@ -20,7 +20,9 @@ export class DocumentsController {
   @Get()
   findAll(@Req() req) {
     const userId = req.user.userId as number;
-    return this.documentsService.findAllByParams({ where: { owner_id: userId } });
+    return this.documentsService.findAllByParams({
+      where: { owner_id: userId }
+    });
   }
 
   @Get(':id')
@@ -39,8 +41,8 @@ export class DocumentsController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body('content') content: string) {
-    return this.documentsService.update(id, content);
+  update(@Param('id') id: string, @Body() updateData: Record<string, any>) {
+    return this.documentsService.update(id, updateData);
   }
 
   @Delete(':id')

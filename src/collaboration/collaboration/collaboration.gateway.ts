@@ -17,8 +17,7 @@ import { DocumentsService } from '../../documents/documents.service';
   },
 })
 export class CollaborationGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @InjectQueue('document-edits') private editsQueue: Queue,
     private readonly documentsService: DocumentsService,
@@ -52,7 +51,6 @@ export class CollaborationGateway
       docId: data.docId,
       content: data.content,
     });
-
     console.log(`📩 Queued edit for doc ${data.docId}`);
   }
 
@@ -62,7 +60,7 @@ export class CollaborationGateway
     @ConnectedSocket() client: Socket,
   ) {
     // Save to DB
-    await this.documentsService.update(data.docId, data.name);
+    await this.documentsService.update(data.docId, { title: data.name });
 
     // Broadcast to all others in room
     client.to(data.docId).emit('documentRenamed', data.name);

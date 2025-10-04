@@ -22,8 +22,8 @@ export class DocumentsService {
     return this.documentRepo.save(doc);
   }
 
-  async update(id: string, content: string) {
-    await this.documentRepo.update(id, { content });
+  async update(id: string, updateData: Partial<Document>) {
+    await this.documentRepo.update(id, updateData);
     return this.findOne(id);
   }
 

@@ -13,7 +13,6 @@ export class AuthService {
   async validateUser(email: string, pass: string) {
     return this.usersService.validateUser(email, pass);
   }
-
   async login(user: any) {
     const payload = { username: user.username, sub: user.id };
     return {
