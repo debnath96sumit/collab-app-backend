@@ -13,11 +13,12 @@ import { DocumentsService } from '../../documents/documents.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // ✅ allow frontend connections (change in prod)
+    origin: '*',
   },
 })
 export class CollaborationGateway
-  implements OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     @InjectQueue('document-edits') private editsQueue: Queue,
     private readonly documentsService: DocumentsService,
@@ -64,5 +65,16 @@ export class CollaborationGateway
 
     // Broadcast to all others in room
     client.to(data.docId).emit('documentRenamed', data.name);
+  }
+  @SubscribeMessage('cursor-position')
+  handleCursorPosition(
+    client: Socket,
+    payload: { documentId: string; position: number; userId: string },
+  ) {
+    client.to(payload.documentId).emit('cursor-update', {
+      position: payload.position,
+      userId: payload.userId,
+      socketId: client.id,
+    });
   }
 }

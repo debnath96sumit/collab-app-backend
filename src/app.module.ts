@@ -8,6 +8,7 @@ import { CollaborationModule } from './collaboration/collaboration.module';
 import { DocumentProcessor } from './queues/document.processor';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { MailModule } from './mail/mail.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +33,7 @@ import { ConfigModule } from '@nestjs/config';
     DocumentsModule,
     CollaborationModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, DocumentProcessor],

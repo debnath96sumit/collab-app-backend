@@ -10,6 +10,10 @@ import {
 } from 'typeorm';
 import { DocumentVersion } from './document-version.entity';
 import { User } from '../users/user.entity';
+import {
+  CollaboratorRole,
+  DocumentCollaborator,
+} from './document-collaborator.entity';
 @Entity()
 export class Document {
   @PrimaryGeneratedColumn('uuid')
@@ -37,4 +41,22 @@ export class Document {
 
   @Column({ nullable: true })
   owner_id: number;
+
+  @Column({ default: 'restricted' })
+  linkAccess: string;
+
+  @Column({
+    type: 'enum',
+    enum: CollaboratorRole,
+    default: CollaboratorRole.VIEWER,
+  })
+  linkPermission: CollaboratorRole;
+
+  @Column({ unique: true })
+  shareToken: string;
+
+  @OneToMany(() => DocumentCollaborator, (collab) => collab.document, {
+    cascade: true,
+  })
+  collaborators: DocumentCollaborator[];
 }

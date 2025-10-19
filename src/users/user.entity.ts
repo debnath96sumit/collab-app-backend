@@ -1,27 +1,36 @@
-// user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Document } from '../documents/document.entity';
+import { DocumentCollaborator } from '../documents/document-collaborator.entity';
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({ unique: true })
-    email: string;
+  @Column({ unique: true })
+  email: string;
 
-    @Column()
-    username: string;
+  @Column()
+  username: string;
 
-    @Column()
-    password: string; // will be hashed
+  @Column()
+  password: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @OneToMany(() => Document, (document) => document.owner)
-    documents: Document[];
+  @OneToMany(() => Document, (document) => document.owner)
+  documents: Document[];
 
+  @OneToMany(() => DocumentCollaborator, (collaborator) => collaborator.user)
+  collaborations: DocumentCollaborator[];
 }
