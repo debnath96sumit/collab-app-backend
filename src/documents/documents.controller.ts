@@ -7,56 +7,71 @@ import {
   Param,
   Body,
   UseGuards,
-  Req,
-  Request,
+  Version,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ShareDocumentDto } from './share-document.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
+import { ApiBearerAuth, ApiTags, ApiConsumes } from '@nestjs/swagger';
+import { LoginUser } from '../common/decorator/login-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+
+@ApiTags('Documents')
+@ApiBearerAuth()
 @Controller('documents')
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(private readonly documentsService: DocumentsService) { }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Req() req) {
-    const userId = req.user.userId as number;
+  @ApiConsumes('application/json')
+  findAll(@LoginUser() user: AuthenticatedUser) {
     return this.documentsService.findAllByParams({
-      where: { owner_id: userId },
+      where: { owner_id: user.id },
     });
   }
 
+  @Version("1")
   @Get(':id')
+  @ApiConsumes('application/json')
   findOne(@Param('id') id: string) {
     return this.documentsService.documentDetails(id);
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Post('create')
-  async create(@Body() createDocumentDto: CreateDocumentDto, @Req() req) {
-    const userId = req.user.userId as number;
-    return this.documentsService.create(createDocumentDto, userId);
+  @ApiConsumes('application/json')
+  async create(@Body() createDocumentDto: CreateDocumentDto, @LoginUser() user: AuthenticatedUser) {
+    return this.documentsService.create(createDocumentDto, user.id);
   }
 
+  @Version("1")
   @Put(':id')
+  @ApiConsumes('application/json')
   update(@Param('id') id: string, @Body() updateData: Record<string, any>) {
     return this.documentsService.update(id, updateData);
   }
 
+  @Version("1")
   @Delete(':id')
+  @ApiConsumes('application/json')
   remove(@Param('id') id: string) {
     return this.documentsService.remove(id);
   }
 
+  @Version("1")
   @UseGuards(JwtAuthGuard)
   @Post(':id/share')
+  @ApiConsumes('application/json')
   async shareDocument(
     @Param('id') documentId: string,
     @Body() shareDto: ShareDocumentDto,
-    @Request() req,
+    @LoginUser() user: AuthenticatedUser,
   ) {
-    const userId = req.user.userId as number;
+    const userId = user.id;
     if (!userId) {
       throw new Error('User not found');
     }
