@@ -3,12 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-import { DocumentsModule } from './documents/documents.module';
-import { CollaborationModule } from './collaboration/collaboration.module';
-import { DocumentProcessor } from './queues/document.processor';
-import { AuthModule } from './auth/auth.module';
+import { DocumentsModule } from '@/documents/documents.module';
+import { CollaborationModule } from '@/collaboration/collaboration.module';
+import { DocumentProcessor } from '@/queues/document.processor';
+import { AuthModule } from '@/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
-import { MailModule } from './mail/mail.module';
+import { MailModule } from '@/mail/mail.module';
+import { UsersModule } from '@/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,12 +31,13 @@ import { MailModule } from './mail/mail.module';
         port: 6379,
       },
     }),
+    AuthModule,
+    UsersModule,
     DocumentsModule,
     CollaborationModule,
-    AuthModule,
     MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, DocumentProcessor],
 })
-export class AppModule {}
+export class AppModule { }

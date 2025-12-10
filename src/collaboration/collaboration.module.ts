@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CollaborationGateway } from './collaboration/collaboration.gateway';
 import { BullModule } from '@nestjs/bullmq';
-import { DocumentsModule } from '../documents/documents.module';
+import { DocumentsModule } from '@/documents/documents.module';
 @Module({
   imports: [
     BullModule.registerQueue({
@@ -11,4 +11,4 @@ import { DocumentsModule } from '../documents/documents.module';
   ],
   providers: [CollaborationGateway],
 })
-export class CollaborationModule {}
+export class CollaborationModule { }

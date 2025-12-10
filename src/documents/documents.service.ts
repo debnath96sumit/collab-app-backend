@@ -11,11 +11,11 @@ import {
   CollaboratorStatus,
   DocumentCollaborator,
 } from './document-collaborator.entity';
-import { User } from '../users/user.entity';
-import { MailService } from '../mail/mail.service';
+import { User } from '@/users/user.entity';
+import { MailService } from '@/mail/mail.service';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateDocumentDto } from './dto/create-document.dto';
-import { errorResponse } from '../common/helpers/api-response.helper';
+import { errorResponse } from '@/common/helpers/api-response.helper';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -26,7 +26,7 @@ export class DocumentsService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   findAllByParams(params: FindManyOptions<Document>) {
     return this.documentRepo.find(params);
@@ -106,7 +106,7 @@ export class DocumentsService {
       });
 
       if (existingCollab) {
-        return errorResponse( existingCollab.status === CollaboratorStatus.ACTIVE
+        return errorResponse(existingCollab.status === CollaboratorStatus.ACTIVE
           ? 'User is already a collaborator'
           : 'Invitation already sent'
         );

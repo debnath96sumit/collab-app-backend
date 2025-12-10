@@ -10,12 +10,12 @@ import {
   Version,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 import { ShareDocumentDto } from './share-document.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { ApiBearerAuth, ApiTags, ApiConsumes } from '@nestjs/swagger';
-import { LoginUser } from '../common/decorator/login-user.decorator';
-import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { LoginUser } from '@/common/decorator/login-user.decorator';
+import type { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
