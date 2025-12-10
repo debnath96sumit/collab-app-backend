@@ -1,28 +1,25 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { UserRepository } from './user.repository';
 import { ApiResponse } from '@/common/types/api-response.type';
+import { RegisterDto } from '@/auth/dto/auth.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private userRepo: UserRepository) { }
 
-  async create(
-    email: string,
-    username: string,
-    password: string,
+  async register(
+    dto: RegisterDto,
   ): Promise<ApiResponse> {
-    const checkUserExits = await this.userRepo.findByCondition({ email });
+    const checkUserExits = await this.userRepo.findByCondition({ email: dto.email });
     if (checkUserExits) {
       throw new ConflictException('User already exists');
     }
-    const checkUsernameExits = await this.userRepo.findByCondition({ username });
+    const checkUsernameExits = await this.userRepo.findByCondition({ username: dto.username });
     if (checkUsernameExits) {
       throw new ConflictException('Username already exists');
     }
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await this.userRepo.create({ email, username, password: hashed });
+    const user = await this.userRepo.create({ email: dto.email, username: dto.username, password: dto.password });
     return {
       statusCode: 201,
       message: 'User created successfully',
@@ -32,7 +29,7 @@ export class UsersService {
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.userRepo.findByCondition({ email });
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (user && (await user.comparePassword(password))) {
       return user;
     }
     return null;

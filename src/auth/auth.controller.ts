@@ -8,7 +8,7 @@ import { LoginDto, RegisterDto } from '@/auth/dto/auth.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
-    private usersService: UsersService,
+    private userService: UsersService,
     private authService: AuthService,
   ) { }
 
@@ -18,11 +18,7 @@ export class AuthController {
   async register(
     @Body() body: RegisterDto,
   ) {
-    return await this.usersService.create(
-      body.email,
-      body.username,
-      body.password,
-    );
+    return await this.userService.register(body);
   }
 
   @Version("1")
