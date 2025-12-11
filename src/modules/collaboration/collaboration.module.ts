@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { CollaborationGateway } from './collaboration/collaboration.gateway';
 import { BullModule } from '@nestjs/bullmq';
-import { DocumentsModule } from '@/documents/documents.module';
+import { DocumentsModule } from '@/modules/documents/documents.module';
+import { CollaborationGateway } from './gateway/collaboration.gateway';
 @Module({
   imports: [
     BullModule.registerQueue({

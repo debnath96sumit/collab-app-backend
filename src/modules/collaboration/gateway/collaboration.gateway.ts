@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Queue } from 'bullmq';
 import { Socket } from 'socket.io';
-import { DocumentsService } from '../../documents/documents.service';
+import { DocumentsService } from '@/modules/documents/documents.service';
 
 @WebSocketGateway({
   cors: {
@@ -17,12 +17,11 @@ import { DocumentsService } from '../../documents/documents.service';
   },
 })
 export class CollaborationGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @InjectQueue('document-edits') private editsQueue: Queue,
     private readonly documentsService: DocumentsService,
-  ) {}
+  ) { }
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
     client.emit('connected', { id: client.id });

@@ -1,10 +1,9 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DocumentVersion } from '../documents/document-version.entity';
-import { Document } from '../documents/document.entity';
 import { Job } from 'bullmq';
-
+import { DocumentVersion } from '@/modules/documents/entities/document-version.entity';
+import { Document } from '@/modules/documents/entities/document.entity';
 export type DocumentJob = Job<{ docId: string; content: string }>;
 @Processor('document-edits')
 export class DocumentProcessor extends WorkerHost {

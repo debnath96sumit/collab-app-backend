@@ -1,4 +1,3 @@
-// document-collaborator.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -6,8 +5,8 @@ import {
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
-import { Document } from './document.entity';
-import { User } from '../users/user.entity';
+import { Document } from '@/modules/documents/entities/document.entity';
+import { User } from '@/modules/users/user.entity';
 
 export enum CollaboratorRole {
   OWNER = 'owner',

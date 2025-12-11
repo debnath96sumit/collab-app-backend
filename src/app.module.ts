@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-import { DocumentsModule } from '@/documents/documents.module';
-import { CollaborationModule } from '@/collaboration/collaboration.module';
+import { DocumentsModule } from '@/modules/documents/documents.module';
+import { CollaborationModule } from '@/modules/collaboration/collaboration.module';
 import { DocumentProcessor } from '@/queues/document.processor';
 import { AuthModule } from '@/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailModule } from '@/mail/mail.module';
-import { UsersModule } from '@/users/users.module';
+import { UsersModule } from '@/modules/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({

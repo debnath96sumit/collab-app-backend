@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum } from 'class-validator';
-import { CollaboratorRole } from './document-collaborator.entity';
+import { CollaboratorRole } from './entities/document-collaborator.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ShareDocumentDto {

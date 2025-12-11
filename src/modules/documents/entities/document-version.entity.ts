@@ -5,7 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
-import { Document } from './document.entity';
+import { Document } from '@/modules/documents/entities/document.entity';
 
 @Entity()
 export class DocumentVersion {

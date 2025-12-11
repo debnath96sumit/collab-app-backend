@@ -8,12 +8,12 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { DocumentVersion } from './document-version.entity';
-import { User } from '../users/user.entity';
+import { DocumentVersion } from '@/modules/documents/entities/document-version.entity';
+import { User } from '@/modules/users/user.entity';
 import {
   CollaboratorRole,
   DocumentCollaborator,
-} from './document-collaborator.entity';
+} from '@/modules/documents/entities/document-collaborator.entity';
 @Entity()
 export class Document {
   @PrimaryGeneratedColumn('uuid')
@@ -35,6 +35,7 @@ export class Document {
     cascade: true,
   })
   versions: DocumentVersion[];
+
   @ManyToOne(() => User, (user) => user.documents, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'owner_id' })
   owner: User;

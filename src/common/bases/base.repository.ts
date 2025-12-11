@@ -45,16 +45,27 @@ export class BaseRepository<T extends ObjectLiteral> {
         return this.repository.save(entities);
     }
 
-    async update(
+    async updateById(
         id: string | number,
         data: QueryDeepPartialEntity<T>,
         idField: keyof T = 'id' as keyof T
-    ): Promise<boolean> {
-        const result = await this.repository.update(
+    ): Promise<T | null> {
+        await this.repository.update(
             { [idField]: id } as FindOptionsWhere<T>,
             data
         );
-        return (result.affected ?? 0) > 0;
+
+        return this.repository.findOne({
+            where: { [idField]: id } as FindOptionsWhere<T>,
+        });
+    }
+
+    async updateByField(
+        where: FindOptionsWhere<T>,
+        data: QueryDeepPartialEntity<T>
+    ): Promise<T | null> {
+        await this.repository.update(where, data);
+        return this.repository.findOne({ where });
     }
 
     async remove(id: string | number, idField: keyof T = 'id' as keyof T): Promise<boolean> {

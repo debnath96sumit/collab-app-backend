@@ -25,19 +25,17 @@ export class DocumentsController {
 
   @Version("1")
   @UseGuards(JwtAuthGuard)
-  @Get()
+  @Get('get-my-docs')
   @ApiConsumes('application/json')
-  findAll(@LoginUser() user: AuthenticatedUser) {
-    return this.documentsService.findAllByParams({
-      where: { owner_id: user.id },
-    });
+  async getMyDocs(@LoginUser() user: AuthenticatedUser) {
+    return await this.documentsService.getMyDocs(user);
   }
 
   @Version("1")
   @Get(':id')
   @ApiConsumes('application/json')
-  findOne(@Param('id') id: string) {
-    return this.documentsService.documentDetails(id);
+  async documentDetails(@Param('id') id: string) {
+    return await this.documentsService.documentDetails(id);
   }
 
   @Version("1")
@@ -45,21 +43,21 @@ export class DocumentsController {
   @Post('create')
   @ApiConsumes('application/json')
   async create(@Body() createDocumentDto: CreateDocumentDto, @LoginUser() user: AuthenticatedUser) {
-    return this.documentsService.create(createDocumentDto, user.id);
+    return await this.documentsService.create(createDocumentDto, user.id);
   }
 
   @Version("1")
   @Put(':id')
   @ApiConsumes('application/json')
-  update(@Param('id') id: string, @Body() updateData: Record<string, any>) {
-    return this.documentsService.update(id, updateData);
+  async update(@Param('id') id: string, @Body() updateData: Record<string, any>) {
+    return await this.documentsService.update(id, updateData);
   }
 
   @Version("1")
   @Delete(':id')
   @ApiConsumes('application/json')
-  remove(@Param('id') id: string) {
-    return this.documentsService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.documentsService.remove(id);
   }
 
   @Version("1")

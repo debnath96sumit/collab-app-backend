@@ -8,9 +8,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { Document } from '../documents/document.entity';
-import { DocumentCollaborator } from '../documents/document-collaborator.entity';
+import { DocumentCollaborator } from '@/modules/documents/entities/document-collaborator.entity';
 import * as bcrypt from 'bcrypt';
+import { Document } from '@/modules/documents/entities/document.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
