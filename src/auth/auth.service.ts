@@ -16,7 +16,6 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const payload = { username: user.username, id: user.id };
     return {
-      statusCode: 200,
       message: 'Login successful',
       data: {
         user,

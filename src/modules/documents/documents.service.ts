@@ -37,7 +37,7 @@ export class DocumentsService {
   }
 
   async documentDetails(id: string) {
-    const doc = await this.documentRepo.findOneById(id);
+    const doc = await this.documentRepo.getDocumentFullDetails(id);
     if (!doc) {
       throw new NotFoundException('Document not found');
     }

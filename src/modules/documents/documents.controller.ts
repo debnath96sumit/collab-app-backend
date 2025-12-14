@@ -24,8 +24,8 @@ export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) { }
 
   @Version("1")
-  @UseGuards(JwtAuthGuard)
   @Get('get-my-docs')
+  @UseGuards(JwtAuthGuard)
   @ApiConsumes('application/json')
   async getMyDocs(@LoginUser() user: AuthenticatedUser) {
     return await this.documentsService.getMyDocs(user);
@@ -39,8 +39,8 @@ export class DocumentsController {
   }
 
   @Version("1")
-  @UseGuards(JwtAuthGuard)
   @Post('create')
+  @UseGuards(JwtAuthGuard)
   @ApiConsumes('application/json')
   async create(@Body() createDocumentDto: CreateDocumentDto, @LoginUser() user: AuthenticatedUser) {
     return await this.documentsService.create(createDocumentDto, user.id);
@@ -55,6 +55,7 @@ export class DocumentsController {
 
   @Version("1")
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiConsumes('application/json')
   async remove(@Param('id') id: string) {
     return await this.documentsService.remove(id);

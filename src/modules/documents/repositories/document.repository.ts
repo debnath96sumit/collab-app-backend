@@ -12,4 +12,36 @@ export class DocumentRepository extends BaseRepository<Document> {
     ) {
         super(repository);
     }
+
+    async getDocumentFullDetails(id: string) {
+        return this.repository.findOne({
+            where: {
+                id,
+            },
+            relations: {
+                owner: true,
+                collaborators: {
+                    user: true,
+                },
+            },
+            select: {
+                owner: {
+                    id: true,
+                    username: true,
+                    email: true,
+                },
+                collaborators: {
+                    id: true,
+                    role: true,
+                    status: true,
+                    invitedEmail: true,
+                    user: {
+                        id: true,
+                        username: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+    }
 }

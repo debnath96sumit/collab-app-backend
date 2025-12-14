@@ -13,11 +13,11 @@ export class UsersService {
   ): Promise<ApiResponse> {
     const checkUserExits = await this.userRepo.findByCondition({ email: dto.email });
     if (checkUserExits) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException('User with this email already exists');
     }
     const checkUsernameExits = await this.userRepo.findByCondition({ username: dto.username });
     if (checkUsernameExits) {
-      throw new ConflictException('Username already exists');
+      throw new ConflictException('User with this username already exists');
     }
     const user = await this.userRepo.create({ email: dto.email, username: dto.username, password: dto.password });
     return {
