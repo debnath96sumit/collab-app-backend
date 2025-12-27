@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
-import { ShareDocumentDto } from './share-document.dto';
+import { ShareDocumentDto } from './dto/share-document.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { ApiBearerAuth, ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { LoginUser } from '@/common/decorator/login-user.decorator';
@@ -76,8 +76,7 @@ export class DocumentsController {
     }
     return await this.documentsService.shareDocument(
       documentId,
-      shareDto.email,
-      shareDto.permission,
+      shareDto,
       userId,
     );
   }

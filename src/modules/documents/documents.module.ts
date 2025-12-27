@@ -9,6 +9,7 @@ import { DocumentCollaborator } from '@/modules/documents/entities/document-coll
 import { UsersModule } from '@/modules/users/users.module';
 import { DocumentCollaboratorRepository } from './repositories/document-collaborator.repository';
 import { DocumentRepository } from './repositories/document.repository';
+import { InvitationModule } from '@/modules/invitation/invitation.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Document, DocumentVersion, DocumentCollaborator]),
@@ -16,6 +17,7 @@ import { DocumentRepository } from './repositories/document.repository';
       name: 'document-edits',
     }),
     UsersModule,
+    InvitationModule,
   ],
   providers: [DocumentsService, DocumentCollaboratorRepository, DocumentRepository],
   controllers: [DocumentsController],

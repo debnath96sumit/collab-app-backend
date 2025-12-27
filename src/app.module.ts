@@ -8,6 +8,7 @@ import { AuthModule } from '@/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailModule } from '@/mail/mail.module';
 import { UsersModule } from '@/modules/users/users.module';
+import { InvitationModule } from './modules/invitation/invitation.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -42,7 +43,8 @@ import { UsersModule } from '@/modules/users/users.module';
     DocumentsModule,
     CollaborationModule,
     MailModule,
+    InvitationModule,
   ],
   providers: [DocumentProcessor],
 })
-export class AppModule { }
+export class AppModule {}

@@ -4,17 +4,23 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FindManyOptions } from 'typeorm';
 import { Document } from '@/modules/documents/entities/document.entity';
 import { MailService } from '@/mail/mail.service';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateDocumentDto } from '@/modules/documents/dto/create-document.dto';
-import { CollaboratorRole, CollaboratorStatus } from '@/modules/documents/entities/document-collaborator.entity';
+import {
+  CollaboratorRole,
+  CollaboratorStatus,
+} from '@/modules/documents/entities/document-collaborator.entity';
 import { ApiResponse } from '@/common/types/api-response.type';
 import { DocumentRepository } from './repositories/document.repository';
-import { UserRepository } from '../users/user.repository';
+import { UserRepository } from '@/modules/users/user.repository';
 import { DocumentCollaboratorRepository } from './repositories/document-collaborator.repository';
 import { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
+import { InvitationStatus } from '@/modules/invitation/entities/invitation.entity';
+import { InvitationRepository } from '@/modules/invitation/repositories/invitation.repository';
+import { ShareDocumentDto } from './dto/share-document.dto';
+import { Not } from 'typeorm';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -22,17 +28,25 @@ export class DocumentsService {
     private readonly collaboratorRepository: DocumentCollaboratorRepository,
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
+    private readonly invitationRepo: InvitationRepository,
   ) { }
 
   async getMyDocs(user: AuthenticatedUser): Promise<ApiResponse> {
     const userId = user.id;
-    const docs = await this.documentRepo.findAllByCondition({
+    const myDocs = await this.documentRepo.findAllByCondition({
       owner_id: userId,
+    });
+    const sharedWithMe = await this.collaboratorRepository.findAllByCondition({
+      userId,
+      status: CollaboratorStatus.ACTIVE,
+      role: Not(CollaboratorRole.OWNER),
+    }, {
+      relations: ['document'],
     });
     return {
       statusCode: 200,
       message: 'Documents fetched successfully',
-      data: docs,
+      data: { myDocs, sharedWithMe: sharedWithMe.map((doc) => doc.document) },
     }
   }
 
@@ -97,60 +111,107 @@ export class DocumentsService {
 
   async shareDocument(
     documentId: string,
-    email: string,
-    permission: CollaboratorRole,
+    shareDto: ShareDocumentDto,
     requestUserId: number,
-  ) {
-    try {
-      const document = await this.findDocumentWithPermission(
-        documentId,
-        requestUserId,
-        CollaboratorRole.OWNER,
-      );
-      if (!document) throw new NotFoundException('Document not found');
+  ): Promise<ApiResponse> {
+    const document = await this.findDocumentWithPermission(
+      documentId,
+      requestUserId,
+      CollaboratorRole.OWNER,
+    );
 
-      const invitedUser = await this.userRepository.findOneById(email);
-      if (!invitedUser) {
-        throw new NotFoundException('User not found');
-      }
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    const inviter = await this.userRepository.findByCondition({
+      id: requestUserId,
+    });
+
+    if (!inviter) {
+      throw new NotFoundException('User not found');
+    }
+    const existingUser = await this.userRepository.findByCondition({
+      email: shareDto.email,
+    });
+
+    if (existingUser) {
       const existingCollab = await this.collaboratorRepository.findByCondition({
         documentId,
-        ...(invitedUser ? { userId: invitedUser.id } : { invitedEmail: email }),
+        userId: existingUser.id,
       });
 
       if (existingCollab) {
-        throw new ForbiddenException(existingCollab.status === CollaboratorStatus.ACTIVE
-          ? 'User is already a collaborator'
-          : 'Invitation already sent'
-        );
+        throw new BadRequestException('User is already a collaborator');
       }
 
       const collaborator = await this.collaboratorRepository.create({
         documentId,
-        userId: invitedUser.id,
-        invitedEmail: email,
-        role: permission,
-        status: invitedUser
-          ? CollaboratorStatus.PENDING
-          : CollaboratorStatus.PENDING,
+        userId: existingUser.id,
+        role: shareDto.permission,
+        status: CollaboratorStatus.ACTIVE,
       });
 
-      await this.mailService.sendInvitationEmail(
-        email,
+      await this.mailService.sendCollaborationNotification(
+        shareDto.email,
         document.title,
+        existingUser.username,
+        inviter.username,
         document.shareToken,
       );
 
       return {
-        id: collaborator.id,
-        email,
-        name: invitedUser.username,
-        role: permission,
-        status: CollaboratorStatus.PENDING,
+        statusCode: 200,
+        message: 'Invitation sent successfully',
+        data: {
+          id: collaborator.id,
+          email: shareDto.email,
+          name: existingUser.username,
+          role: shareDto.permission,
+          status: CollaboratorStatus.ACTIVE,
+        }
       };
-    } catch (error) {
-      console.log(error);
-      return null;
+    } else {
+      // User doesn't exist - create invitation
+
+      // Check if invitation already exists
+      const existingInvitation = await this.invitationRepo.findByCondition({
+        email: shareDto.email,
+        documentId,
+        status: InvitationStatus.PENDING,
+      });
+
+      if (existingInvitation) {
+        throw new BadRequestException('Invitation already sent to this email');
+      }
+
+      // Create invitation
+      const invitation = await this.invitationRepo.create({
+        email: shareDto.email,
+        role: shareDto.permission,
+        documentId,
+        inviterId: requestUserId,
+      });
+
+      // Send invitation email
+      await this.mailService.sendInvitationEmail(
+        shareDto.email,
+        document.title,
+        invitation.token,
+        inviter.username,
+      );
+
+      return {
+        statusCode: 200,
+        message: 'Invitation sent successfully',
+        data: {
+          id: invitation.id,
+          email: shareDto.email,
+          name: null,
+          role: shareDto.permission,
+          status: 'pending',
+        }
+      };
     }
   }
 
@@ -158,7 +219,7 @@ export class DocumentsService {
     documentId: string,
     userId: number,
     requiredRole: CollaboratorRole,
-  ) {
+  ): Promise<Document> {
     const document = await this.documentRepo.findOneById(documentId);
 
     if (!document) {
