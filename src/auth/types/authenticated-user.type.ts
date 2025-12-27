@@ -1,3 +1,3 @@
-import { User } from "@/modules/users/user.entity";
+import { User } from '@/modules/users/user.entity';
 
-export interface AuthenticatedUser extends Pick<User, 'id' | 'username'> { }
+export interface AuthenticatedUser extends Pick<User, 'id' | 'username'> {}

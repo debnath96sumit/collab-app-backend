@@ -6,10 +6,10 @@ import { BaseRepository } from '@/common/bases/base.repository';
 
 @Injectable()
 export class InvitationRepository extends BaseRepository<Invitation> {
-    constructor(
-        @InjectRepository(Invitation)
-        repository: Repository<Invitation>,
-    ) {
-        super(repository);
-    }
+  constructor(
+    @InjectRepository(Invitation)
+    repository: Repository<Invitation>,
+  ) {
+    super(repository);
+  }
 }

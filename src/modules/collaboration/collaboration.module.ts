@@ -11,4 +11,4 @@ import { CollaborationGateway } from './gateway/collaboration.gateway';
   ],
   providers: [CollaborationGateway],
 })
-export class CollaborationModule { }
+export class CollaborationModule {}

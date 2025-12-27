@@ -21,9 +21,9 @@ import type { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
 @ApiBearerAuth()
 @Controller('documents')
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) { }
+  constructor(private readonly documentsService: DocumentsService) {}
 
-  @Version("1")
+  @Version('1')
   @Get('get-my-docs')
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('application/json')
@@ -31,29 +31,35 @@ export class DocumentsController {
     return await this.documentsService.getMyDocs(user);
   }
 
-  @Version("1")
+  @Version('1')
   @Get(':id')
   @ApiConsumes('application/json')
   async documentDetails(@Param('id') id: string) {
     return await this.documentsService.documentDetails(id);
   }
 
-  @Version("1")
+  @Version('1')
   @Post('create')
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('application/json')
-  async create(@Body() createDocumentDto: CreateDocumentDto, @LoginUser() user: AuthenticatedUser) {
+  async create(
+    @Body() createDocumentDto: CreateDocumentDto,
+    @LoginUser() user: AuthenticatedUser,
+  ) {
     return await this.documentsService.create(createDocumentDto, user.id);
   }
 
-  @Version("1")
+  @Version('1')
   @Put(':id')
   @ApiConsumes('application/json')
-  async update(@Param('id') id: string, @Body() updateData: Record<string, any>) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateData: Record<string, any>,
+  ) {
     return await this.documentsService.update(id, updateData);
   }
 
-  @Version("1")
+  @Version('1')
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('application/json')
@@ -61,7 +67,7 @@ export class DocumentsController {
     return await this.documentsService.remove(id);
   }
 
-  @Version("1")
+  @Version('1')
   @UseGuards(JwtAuthGuard)
   @Post(':id/share')
   @ApiConsumes('application/json')

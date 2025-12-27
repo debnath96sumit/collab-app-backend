@@ -49,4 +49,3 @@ export class User {
     return bcrypt.compare(password, this.password);
   }
 }
-

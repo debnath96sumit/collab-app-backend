@@ -6,10 +6,10 @@ import { BaseRepository } from '@/common/bases/base.repository';
 
 @Injectable()
 export class DocumentVersionRepository extends BaseRepository<DocumentVersion> {
-    constructor(
-        @InjectRepository(DocumentVersion)
-        repository: Repository<DocumentVersion>,
-    ) {
-        super(repository);
-    }
+  constructor(
+    @InjectRepository(DocumentVersion)
+    repository: Repository<DocumentVersion>,
+  ) {
+    super(repository);
+  }
 }

@@ -19,8 +19,12 @@ import { InvitationModule } from '@/modules/invitation/invitation.module';
     UsersModule,
     InvitationModule,
   ],
-  providers: [DocumentsService, DocumentCollaboratorRepository, DocumentRepository],
+  providers: [
+    DocumentsService,
+    DocumentCollaboratorRepository,
+    DocumentRepository,
+  ],
   controllers: [DocumentsController],
   exports: [DocumentsService, TypeOrmModule],
 })
-export class DocumentsModule { }
+export class DocumentsModule {}

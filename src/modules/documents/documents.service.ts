@@ -29,25 +29,28 @@ export class DocumentsService {
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
     private readonly invitationRepo: InvitationRepository,
-  ) { }
+  ) {}
 
   async getMyDocs(user: AuthenticatedUser): Promise<ApiResponse> {
     const userId = user.id;
     const myDocs = await this.documentRepo.findAllByCondition({
       owner_id: userId,
     });
-    const sharedWithMe = await this.collaboratorRepository.findAllByCondition({
-      userId,
-      status: CollaboratorStatus.ACTIVE,
-      role: Not(CollaboratorRole.OWNER),
-    }, {
-      relations: ['document'],
-    });
+    const sharedWithMe = await this.collaboratorRepository.findAllByCondition(
+      {
+        userId,
+        status: CollaboratorStatus.ACTIVE,
+        role: Not(CollaboratorRole.OWNER),
+      },
+      {
+        relations: ['document'],
+      },
+    );
     return {
       statusCode: 200,
       message: 'Documents fetched successfully',
       data: { myDocs, sharedWithMe: sharedWithMe.map((doc) => doc.document) },
-    }
+    };
   }
 
   async documentDetails(id: string) {
@@ -59,10 +62,13 @@ export class DocumentsService {
       statusCode: 200,
       message: 'Document fetched successfully',
       data: doc,
-    }
+    };
   }
 
-  async create(createDocumentDto: CreateDocumentDto, userId: number): Promise<ApiResponse> {
+  async create(
+    createDocumentDto: CreateDocumentDto,
+    userId: number,
+  ): Promise<ApiResponse> {
     const shareToken = uuidv4();
 
     const savedDocument = await this.documentRepo.create({
@@ -86,10 +92,13 @@ export class DocumentsService {
       statusCode: 201,
       message: 'Document created successfully',
       data: savedDocument,
-    }
+    };
   }
 
-  async update(id: string, updateData: Partial<Document>): Promise<ApiResponse> {
+  async update(
+    id: string,
+    updateData: Partial<Document>,
+  ): Promise<ApiResponse> {
     const updatedDocument = await this.documentRepo.updateById(id, updateData);
     if (!updatedDocument) {
       throw new NotFoundException('Document not found');
@@ -98,7 +107,7 @@ export class DocumentsService {
       statusCode: 200,
       message: 'Document updated successfully',
       data: updatedDocument,
-    }
+    };
   }
 
   async remove(id: string) {
@@ -169,7 +178,7 @@ export class DocumentsService {
           name: existingUser.username,
           role: shareDto.permission,
           status: CollaboratorStatus.ACTIVE,
-        }
+        },
       };
     } else {
       // User doesn't exist - create invitation
@@ -210,7 +219,7 @@ export class DocumentsService {
           name: null,
           role: shareDto.permission,
           status: 'pending',
-        }
+        },
       };
     }
   }

@@ -1,75 +1,75 @@
 import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    ManyToOne,
-    JoinColumn,
-    BeforeInsert,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  BeforeInsert,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Document } from '@/modules/documents/entities/document.entity';
 import { User } from '@/modules/users/user.entity';
 
 export enum InvitationStatus {
-    PENDING = 'pending',
-    ACCEPTED = 'accepted',
-    EXPIRED = 'expired',
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  EXPIRED = 'expired',
 }
 
 @Entity('invitations')
 export class Invitation {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({ unique: true })
-    token: string;
+  @Column({ unique: true })
+  token: string;
 
-    @Column()
-    email: string;
+  @Column()
+  email: string;
 
-    @Column()
-    role: string; // 'editor', 'commenter', 'viewer'
+  @Column()
+  role: string; // 'editor', 'commenter', 'viewer'
 
-    @Column({
-        type: 'enum',
-        enum: InvitationStatus,
-        default: InvitationStatus.PENDING,
-    })
-    status: InvitationStatus;
+  @Column({
+    type: 'enum',
+    enum: InvitationStatus,
+    default: InvitationStatus.PENDING,
+  })
+  status: InvitationStatus;
 
-    @ManyToOne(() => Document)
-    @JoinColumn({ name: 'documentId' })
-    document: Document;
+  @ManyToOne(() => Document)
+  @JoinColumn({ name: 'documentId' })
+  document: Document;
 
-    @Column()
-    documentId: string;
+  @Column()
+  documentId: string;
 
-    @ManyToOne(() => User)
-    @JoinColumn({ name: 'inviterId' })
-    inviter: User;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'inviterId' })
+  inviter: User;
 
-    @Column()
-    inviterId: number;
+  @Column()
+  inviterId: number;
 
-    @Column({ type: 'timestamp' })
-    expiresAt: Date;
+  @Column({ type: 'timestamp' })
+  expiresAt: Date;
 
-    @Column({ type: 'timestamp', nullable: true })
-    acceptedAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  acceptedAt: Date;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @BeforeInsert()
-    generateToken() {
-        if (!this.token) {
-            this.token = uuidv4();
-        }
-        if (!this.expiresAt) {
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 7);
-            this.expiresAt = expiresAt;
-        }
+  @BeforeInsert()
+  generateToken() {
+    if (!this.token) {
+      this.token = uuidv4();
     }
+    if (!this.expiresAt) {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      this.expiresAt = expiresAt;
+    }
+  }
 }

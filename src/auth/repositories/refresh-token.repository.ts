@@ -1,15 +1,14 @@
-// user.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { RefreshToken } from '../entities/refresh-token.entity';
 import { BaseRepository } from '@/common/bases/base.repository';
 
 @Injectable()
-export class UserRepository extends BaseRepository<User> {
+export class RefreshTokenRepository extends BaseRepository<RefreshToken> {
   constructor(
-    @InjectRepository(User)
-    repository: Repository<User>,
+    @InjectRepository(RefreshToken)
+    repository: Repository<RefreshToken>,
   ) {
     super(repository);
   }

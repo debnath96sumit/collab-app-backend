@@ -6,10 +6,10 @@ import { BaseRepository } from '@/common/bases/base.repository';
 
 @Injectable()
 export class DocumentCollaboratorRepository extends BaseRepository<DocumentCollaborator> {
-    constructor(
-        @InjectRepository(DocumentCollaborator)
-        repository: Repository<DocumentCollaborator>,
-    ) {
-        super(repository);
-    }
+  constructor(
+    @InjectRepository(DocumentCollaborator)
+    repository: Repository<DocumentCollaborator>,
+  ) {
+    super(repository);
+  }
 }

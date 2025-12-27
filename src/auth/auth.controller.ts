@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Version, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Version, HttpCode, Req, UnauthorizedException, Res, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { UsersService } from '@/modules/users/user.service';
 import { AuthService } from '@/auth/auth.service';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
@@ -12,20 +13,51 @@ export class AuthController {
     private authService: AuthService,
   ) { }
 
-  @Version("1")
+  @Version('1')
   @Post('register')
   @ApiConsumes('application/json')
-  async register(
-    @Body() body: RegisterDto,
-  ) {
+  async register(@Body() body: RegisterDto) {
     return await this.userService.register(body);
   }
 
-  @Version("1")
+  @Version('1')
   @Post('login')
   @HttpCode(200)
   @ApiConsumes('application/json')
-  async login(@Body() body: LoginDto) {
-    return await this.authService.login(body);
+  async login(
+    @Body() body: LoginDto,
+    @Req() req: Request,
+  ) {
+    const userAgent = req.headers['user-agent'];
+    const ipAddress = req.headers['x-forwarded-for'] as string ||
+      req.headers['x-real-ip'] as string ||
+      req.ip;
+    return await this.authService.login(body, userAgent, ipAddress);
+  }
+
+  @Post('refresh-token')
+  async refresh(
+    @Body() body: { refreshToken: string },
+  ) {
+    const refreshToken = body.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
+
+    return await this.authService.refreshAccessToken(refreshToken);
+  }
+
+  @Post('logout')
+  async logout(
+    @Body() body: { refreshToken: string },
+  ) {
+    const refreshToken = body.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
+
+    return await this.authService.logout(refreshToken);
   }
 }
