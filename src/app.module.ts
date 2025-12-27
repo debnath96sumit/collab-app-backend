@@ -9,11 +9,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailModule } from '@/mail/mail.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { InvitationModule } from './modules/invitation/invitation.module';
+import { ApiConfigModule } from './config.module';
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ApiConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -47,4 +46,4 @@ import { InvitationModule } from './modules/invitation/invitation.module';
   ],
   providers: [DocumentProcessor],
 })
-export class AppModule {}
+export class AppModule { }

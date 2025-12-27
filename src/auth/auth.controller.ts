@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { UsersService } from '@/modules/users/user.service';
 import { AuthService } from '@/auth/auth.service';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { LoginDto, RegisterDto } from '@/auth/dto/auth.dto';
+import { LoginDto, LogoutDto, RefreshTokenDto, RegisterDto } from '@/auth/dto/auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -35,9 +35,11 @@ export class AuthController {
     return await this.authService.login(body, userAgent, ipAddress);
   }
 
+  @Version('1')
   @Post('refresh-token')
+  @ApiConsumes('application/json')
   async refresh(
-    @Body() body: { refreshToken: string },
+    @Body() body: RefreshTokenDto,
   ) {
     const refreshToken = body.refreshToken;
 
@@ -48,9 +50,11 @@ export class AuthController {
     return await this.authService.refreshAccessToken(refreshToken);
   }
 
+  @Version('1')
   @Post('logout')
+  @ApiConsumes('application/json')
   async logout(
-    @Body() body: { refreshToken: string },
+    @Body() body: LogoutDto,
   ) {
     const refreshToken = body.refreshToken;
 

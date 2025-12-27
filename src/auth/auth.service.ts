@@ -8,11 +8,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { Jwtpayload } from '@/common/interfaces/common.interface';
 import { User } from '@/modules/users/user.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
+    private configService: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
   ) { }
@@ -54,6 +56,7 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
       expiresIn: '15m',
     });
   }
