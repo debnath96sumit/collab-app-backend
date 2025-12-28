@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Version, HttpCode, Req, UnauthorizedException, Res, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Version, HttpCode, Req, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 import { UsersService } from '@/modules/users/user.service';
 import { AuthService } from '@/auth/auth.service';
@@ -6,7 +6,7 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { LoginDto, LogoutDto, RefreshTokenDto, RegisterDto } from '@/auth/dto/auth.dto';
 
 @ApiTags('Auth')
-@Controller('auth')
+@Controller('api/auth')
 export class AuthController {
   constructor(
     private userService: UsersService,
