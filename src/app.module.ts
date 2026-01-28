@@ -46,4 +46,4 @@ import { ApiConfigModule } from './config.module';
   ],
   providers: [DocumentProcessor],
 })
-export class AppModule { }
+export class AppModule {}

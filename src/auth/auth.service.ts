@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiResponse } from '@/common/types/api-response.type';
 import { LoginDto } from '@/auth/dto/auth.dto';
@@ -17,7 +17,7 @@ export class AuthService {
     private configService: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
-  ) { }
+  ) {}
 
   async login(
     loginDto: LoginDto,
@@ -139,7 +139,9 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has expired');
     }
 
-    await this.refreshTokenRepository.updateById(refreshToken.id, { isRevoked: true });
+    await this.refreshTokenRepository.updateById(refreshToken.id, {
+      isRevoked: true,
+    });
 
     return {
       statusCode: 200,

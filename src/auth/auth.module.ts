@@ -23,4 +23,4 @@ import { RefreshTokenRepository } from './repositories/refresh-token.repository'
   controllers: [AuthController],
   exports: [AuthService, RefreshTokenRepository],
 })
-export class AuthModule { }
+export class AuthModule {}
