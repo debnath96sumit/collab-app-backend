@@ -4,11 +4,11 @@ import { ApiResponse } from '@/common/types/api-response.type';
 import { LoginDto } from '@/auth/dto/auth.dto';
 import { UserRepository } from '@/modules/users/user.repository';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
-import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { Jwtpayload } from '@/common/interfaces/common.interface';
 import { User } from '@/modules/users/user.entity';
 import { ConfigService } from '@nestjs/config';
+import { generateUUID } from '@/common/utils/uuid';
 
 @Injectable()
 export class AuthService {
@@ -66,7 +66,7 @@ export class AuthService {
     userAgent?: string,
     ipAddress?: string,
   ): Promise<RefreshToken> {
-    const token = uuidv4();
+    const token = await generateUUID();
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);

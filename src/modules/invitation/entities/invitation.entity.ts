@@ -7,9 +7,9 @@ import {
   JoinColumn,
   BeforeInsert,
 } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import { Document } from '@/modules/documents/entities/document.entity';
 import { User } from '@/modules/users/user.entity';
+import { generateUUID } from '@/common/utils/uuid';
 
 export enum InvitationStatus {
   PENDING = 'pending',
@@ -62,9 +62,9 @@ export class Invitation {
   createdAt: Date;
 
   @BeforeInsert()
-  generateToken() {
+  async generateToken() {
     if (!this.token) {
-      this.token = uuidv4();
+      this.token = await generateUUID();
     }
     if (!this.expiresAt) {
       const expiresAt = new Date();
