@@ -5,7 +5,7 @@ import { LoginDto } from '@/auth/dto/auth.dto';
 import { UserRepository } from '@/modules/users/user.repository';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { Jwtpayload } from '@/common/interfaces/common.interface';
+import { JwtPayload } from '@/common/interfaces/common.interface';
 import { User } from '@/modules/users/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { generateUUID } from '@/common/utils/uuid';
@@ -49,15 +49,13 @@ export class AuthService {
   }
 
   private generateAccessToken(user: User): string {
-    const payload: Jwtpayload = {
+    const payload: JwtPayload = {
       id: user.id,
-      email: user.email,
-      username: user.username,
     };
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_SECRET'),
-      expiresIn: '15m',
+      expiresIn: '1m',
     });
   }
 
