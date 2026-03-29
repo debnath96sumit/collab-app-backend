@@ -6,9 +6,11 @@ import {
   ManyToOne,
   CreateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('refresh_tokens')
+@Index(['userId', 'isRevoked'])
 export class RefreshToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -21,7 +23,7 @@ export class RefreshToken {
   user: User;
 
   @Column()
-  userId: number;
+  userId: string;
 
   @Column({ type: 'timestamp' })
   expiresAt: Date;
@@ -29,11 +31,20 @@ export class RefreshToken {
   @Column({ default: false })
   isRevoked: boolean;
 
-  @Column({ nullable: true })
-  userAgent: string; // Track device
+  @Column({ nullable: true, type: 'timestamp' })
+  revokedAt: Date;
 
   @Column({ nullable: true })
-  ipAddress: string; // Track IP
+  replacedByToken: string;
+
+  @Column({ nullable: true })
+  userAgent: string;
+
+  @Column({ nullable: true })
+  ipAddress: string;
+
+  @Column({ nullable: true })
+  deviceName: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -29,7 +29,7 @@ export class DocumentsService {
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
     private readonly invitationRepo: InvitationRepository,
-  ) {}
+  ) { }
 
   async getMyDocs(user: AuthenticatedUser): Promise<ApiResponse> {
     const userId = user.id;
@@ -67,7 +67,7 @@ export class DocumentsService {
 
   async create(
     createDocumentDto: CreateDocumentDto,
-    userId: number,
+    userId: string,
   ): Promise<ApiResponse> {
     const shareToken = await generateUUID();
 
@@ -121,7 +121,7 @@ export class DocumentsService {
   async shareDocument(
     documentId: string,
     shareDto: ShareDocumentDto,
-    requestUserId: number,
+    requestUserId: string,
   ): Promise<ApiResponse> {
     const document = await this.findDocumentWithPermission(
       documentId,
@@ -226,7 +226,7 @@ export class DocumentsService {
 
   private async findDocumentWithPermission(
     documentId: string,
-    userId: number,
+    userId: string,
     requiredRole: CollaboratorRole,
   ): Promise<Document> {
     const document = await this.documentRepo.findOneById(documentId);

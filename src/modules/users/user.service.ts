@@ -1,42 +1,16 @@
 import {
-  ConflictException,
   HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { ApiResponse } from '@/common/types/api-response.type';
-import { RegisterDto } from '@/auth/dto/auth.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private userRepo: UserRepository) { }
 
-  async register(dto: RegisterDto): Promise<ApiResponse> {
-    const checkUserExits = await this.userRepo.findByCondition({
-      email: dto.email,
-    });
-    if (checkUserExits) {
-      throw new ConflictException('User with this email already exists');
-    }
-    const checkUsernameExits = await this.userRepo.findByCondition({
-      username: dto.username,
-    });
-    if (checkUsernameExits) {
-      throw new ConflictException('User with this username already exists');
-    }
-    const user = await this.userRepo.create({
-      email: dto.email,
-      username: dto.username,
-      password: dto.password,
-    });
-    return {
-      statusCode: HttpStatus.CREATED,
-      message: 'User created successfully',
-      data: user,
-    };
-  }
-  async details(id: number): Promise<ApiResponse> {
+  async details(id: string): Promise<ApiResponse> {
     const user = await this.userRepo.findOneById(id);
     if (!user) {
       throw new NotFoundException('User not found');

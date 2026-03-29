@@ -41,7 +41,7 @@ export class Document {
   owner: User;
 
   @Column({ nullable: true })
-  owner_id: number;
+  owner_id: string;
 
   @Column({ default: 'restricted' })
   linkAccess: string;

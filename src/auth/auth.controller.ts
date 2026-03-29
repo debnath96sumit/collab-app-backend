@@ -24,13 +24,13 @@ export class AuthController {
   constructor(
     private userService: UsersService,
     private authService: AuthService,
-  ) {}
+  ) { }
 
   @Version('1')
   @Post('register')
   @ApiConsumes('application/json')
   async register(@Body() body: RegisterDto) {
-    return await this.userService.register(body);
+    return await this.authService.register(body);
   }
 
   @Version('1')

@@ -39,6 +39,11 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fullName: string;
 }
 
 export class RefreshTokenDto {

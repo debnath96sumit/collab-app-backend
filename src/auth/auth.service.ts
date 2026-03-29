@@ -1,7 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiResponse } from '@/common/types/api-response.type';
-import { LoginDto } from '@/auth/dto/auth.dto';
+import { LoginDto, RegisterDto } from '@/auth/dto/auth.dto';
 import { UserRepository } from '@/modules/users/user.repository';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -9,6 +9,8 @@ import { JwtPayload } from '@/common/interfaces/common.interface';
 import { User } from '@/modules/users/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { generateUUID } from '@/common/utils/uuid';
+import { UserRole } from '@/common/enum/user-role.enum';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -17,19 +19,51 @@ export class AuthService {
     private configService: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
-  ) {}
+  ) { }
+
+  async register(dto: RegisterDto): Promise<ApiResponse> {
+    const checkUserExits = await this.userRepo.findByCondition({
+      email: dto.email,
+    });
+    if (checkUserExits) {
+      throw new ConflictException('User with this email already exists');
+    }
+    const checkUsernameExits = await this.userRepo.findByCondition({
+      username: dto.username,
+    });
+    if (checkUsernameExits) {
+      throw new ConflictException('User with this username already exists');
+    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const user = await this.userRepo.create({
+      email: dto.email,
+      username: dto.username,
+      password: hashedPassword,
+      fullName: dto.fullName,
+      role: UserRole.USER,
+    });
+
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = await this.generateRefreshToken(user.id);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'User created successfully',
+      data: {
+        accessToken,
+        refreshToken: refreshToken?.token || null,
+        refreshTokenExpiry: refreshToken?.expiresAt || null,
+        user,
+      },
+    };
+  }
 
   async login(
     loginDto: LoginDto,
     userAgent?: string,
     ipAddress?: string,
   ): Promise<ApiResponse> {
-    const user = await this.userRepo.findByCondition({ email: loginDto.email });
+    const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!(await user.comparePassword(loginDto.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const accessToken = this.generateAccessToken(user);
@@ -54,13 +88,13 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_SECRET'),
-      expiresIn: '1m',
+      secret: this.configService.getOrThrow('JWT_SECRET'),
+      expiresIn: this.configService.getOrThrow('JWT_ACCESS_EXPIRES_IN'),
     });
   }
 
   private async generateRefreshToken(
-    userId: number,
+    userId: string,
     userAgent?: string,
     ipAddress?: string,
   ): Promise<RefreshToken> {
@@ -145,5 +179,15 @@ export class AuthService {
       statusCode: 200,
       message: 'Logged out successfully',
     };
+  }
+
+  async validateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.userRepo.findByCondition({ email });
+    if (!user) return null;
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return null;
+
+    return user;
   }
 }

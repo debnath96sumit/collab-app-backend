@@ -37,7 +37,7 @@ export class DocumentCollaborator {
   user: User;
 
   @Column({ nullable: true })
-  userId: number;
+  userId: string;
 
   @Column({ nullable: true })
   invitedEmail: string;

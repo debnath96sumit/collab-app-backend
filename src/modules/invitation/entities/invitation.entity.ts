@@ -50,7 +50,7 @@ export class Invitation {
   inviter: User;
 
   @Column()
-  inviterId: number;
+  inviterId: string;
 
   @Column({ type: 'timestamp' })
   expiresAt: Date;
