@@ -6,7 +6,7 @@ import { LoginUser } from 'src/common/decorator/login-user.decorator';
 import type { AuthenticatedUser } from 'src/auth/types/authenticated-user.type';
 
 @ApiTags('Users')
-@Controller('api/users')
+@Controller('users')
 export class UserController {
   constructor(private usersService: UsersService) { }
 

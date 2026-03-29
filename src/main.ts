@@ -3,34 +3,46 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from '@/common/interceptors/response.interceptor';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+    origin: configService.getOrThrow<string>('FRONTEND_URL'),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
   });
+  app.setGlobalPrefix('/api');
+
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  const config = new DocumentBuilder()
-    .addBearerAuth()
-    .setTitle('API documentation')
-    .setDescription('The API Documentation')
-    .setVersion('1.0')
-    .addTag('Auth')
-    .build();
+  if (configService.getOrThrow('NODE_ENV') === 'development') {
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('apidoc', app, document);
+    const config = new DocumentBuilder()
+      .addBearerAuth()
+      .setTitle('API documentation')
+      .setDescription('The API Documentation')
+      .setVersion('1.0')
+      .addTag('Auth')
+      .build();
 
-  await app.listen(process.env.PORT ?? 3000, () => {
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('apidoc', app, document, {
+      swaggerOptions: {
+        defaultModelsExpandDepth: -1, // Hides the Schemas section
+      },
+    });
+  }
+
+  await app.listen(configService.getOrThrow<number>('PORT'), () => {
     console.log(
-      `Server is running on http://127.0.0.1:${process.env.PORT ?? 3000}/apidoc`,
+      `Server is running on http://127.0.0.1:${configService.getOrThrow<number>('PORT')}/apidoc`,
     );
   });
 }

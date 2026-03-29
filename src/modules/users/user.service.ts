@@ -1,16 +1,16 @@
 import {
   ConflictException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from './user.entity';
 import { UserRepository } from './user.repository';
 import { ApiResponse } from '@/common/types/api-response.type';
 import { RegisterDto } from '@/auth/dto/auth.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepo: UserRepository) {}
+  constructor(private userRepo: UserRepository) { }
 
   async register(dto: RegisterDto): Promise<ApiResponse> {
     const checkUserExits = await this.userRepo.findByCondition({
@@ -31,7 +31,7 @@ export class UsersService {
       password: dto.password,
     });
     return {
-      statusCode: 201,
+      statusCode: HttpStatus.CREATED,
       message: 'User created successfully',
       data: user,
     };
@@ -42,7 +42,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return {
-      statusCode: 200,
+      statusCode: HttpStatus.OK,
       message: 'User details',
       data: user,
     };

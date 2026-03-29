@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
+      host: this.configService.getOrThrow<string>('MAIL_HOST'),
       port: 2525,
       auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASSWORD,
+        user: this.configService.getOrThrow<string>('MAIL_USER'),
+        pass: this.configService.getOrThrow<string>('MAIL_PASSWORD'),
       },
     });
   }
@@ -22,10 +23,10 @@ export class MailService {
     invitationToken: string,
     inviterName: string,
   ) {
-    const inviteLink = `${process.env.FRONTEND_URL}/invitation?token=${invitationToken}`;
+    const inviteLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/invitation?token=${invitationToken}`;
 
     const mailOptions = {
-      from: process.env.MAIL_FROM || '"CollabDocs" <noreply@collabdocs.com>',
+      from: this.configService.getOrThrow<string>('MAIL_FROM') || '"CollabDocs" <noreply@collabdocs.com>',
       to: toEmail,
       subject: `You're invited to collaborate on "${documentTitle}"`,
       html: `
@@ -162,10 +163,10 @@ export class MailService {
     inviterName: string,
     shareToken: string,
   ) {
-    const documentLink = `${process.env.FRONTEND_URL}/doc/${shareToken}`;
+    const documentLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/doc/${shareToken}`;
 
     const mailOptions = {
-      from: process.env.MAIL_FROM || '"CollabDocs" <noreply@collabdocs.com>',
+      from: this.configService.getOrThrow<string>('MAIL_FROM') || '"CollabDocs" <noreply@collabdocs.com>',
       to: toEmail,
       subject: `You've been added to "${documentTitle}"`,
       html: `

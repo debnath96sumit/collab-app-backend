@@ -10,6 +10,7 @@ import { UsersModule } from '@/modules/users/users.module';
 import { DocumentCollaboratorRepository } from './repositories/document-collaborator.repository';
 import { DocumentRepository } from './repositories/document.repository';
 import { InvitationModule } from '@/modules/invitation/invitation.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Document, DocumentVersion, DocumentCollaborator]),
@@ -27,4 +28,4 @@ import { InvitationModule } from '@/modules/invitation/invitation.module';
   controllers: [DocumentsController],
   exports: [DocumentsService, TypeOrmModule],
 })
-export class DocumentsModule {}
+export class DocumentsModule { }
