@@ -4,19 +4,17 @@ import { ApiResponse } from '@/common/types/api-response.type';
 import { LoginDto, RegisterDto } from '@/auth/dto/auth.dto';
 import { UserRepository } from '@/modules/users/user.repository';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
-import { RefreshToken } from './entities/refresh-token.entity';
-import { JwtPayload } from '@/common/interfaces/common.interface';
 import { User } from '@/modules/users/user.entity';
 import { ConfigService } from '@nestjs/config';
-import { generateUUID } from '@/common/utils/uuid';
 import { UserRole } from '@/common/enum/user-role.enum';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
   ) { }
@@ -43,8 +41,7 @@ export class AuthService {
       role: UserRole.USER,
     });
 
-    const accessToken = this.generateAccessToken(user);
-    const refreshToken = await this.generateRefreshToken(user.id);
+    const { accessToken, refreshToken } = await this.issueTokens(user);
     return {
       statusCode: HttpStatus.CREATED,
       message: 'User created successfully',
@@ -66,10 +63,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const accessToken = this.generateAccessToken(user);
-    const refreshToken = loginDto.rememberMe
-      ? await this.generateRefreshToken(user.id, userAgent, ipAddress)
-      : null;
+    const { accessToken, refreshToken } = await this.issueTokens(user, userAgent, ipAddress);
 
     return {
       message: 'Login successful',
@@ -82,69 +76,80 @@ export class AuthService {
     };
   }
 
-  private generateAccessToken(user: User): string {
-    const payload: JwtPayload = {
-      id: user.id,
-    };
-
-    return this.jwtService.sign(payload, {
+  async issueTokens(user: any, userAgent?: string, ipAddress?: string) {
+    const payload = { id: user.id, role: user.role };
+    const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.getOrThrow('JWT_SECRET'),
       expiresIn: this.configService.getOrThrow('JWT_ACCESS_EXPIRES_IN'),
     });
+
+    const refreshToken = await this.generateRefreshToken(user.id, userAgent, ipAddress);
+    return { accessToken, refreshToken };
   }
 
   private async generateRefreshToken(
     userId: string,
     userAgent?: string,
     ipAddress?: string,
-  ): Promise<RefreshToken> {
-    const token = await generateUUID();
-
+  ): Promise<{ token: string, expiresAt: Date, hashedToken: string }> {
+    const plainToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
-    return await this.refreshTokenRepository.create({
-      token,
+    const record = await this.refreshTokenRepository.create({
+      token: hashedToken,
       userId,
       expiresAt,
       userAgent,
       ipAddress,
     });
+
+    return { token: plainToken, expiresAt: record.expiresAt, hashedToken };
   }
 
   async refreshAccessToken(refreshTokenString: string): Promise<ApiResponse> {
-    // Find refresh token in database
-    const refreshToken = await this.refreshTokenRepository.findByCondition(
-      { token: refreshTokenString },
+    const hashedToken = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
+
+    const existingRefreshToken = await this.refreshTokenRepository.findByCondition(
+      { token: hashedToken },
       {
         relations: ['user'],
       },
     );
 
-    if (!refreshToken) {
+    if (!existingRefreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    if (refreshToken.isRevoked) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+    if (existingRefreshToken.isRevoked) {
+      // Replay attack detected. Revoke all tokens for this user.
+      await this.refreshTokenRepository.updateByField(
+        { userId: existingRefreshToken.user.id },
+        { isRevoked: true, revokedAt: new Date() }
+      );
+      throw new UnauthorizedException('Security alert: Refresh token reuse detected. All sessions revoked.');
     }
 
-    if (new Date() > refreshToken.expiresAt) {
-      await this.refreshTokenRepository.remove(refreshToken.id);
+    if (new Date() > existingRefreshToken.expiresAt) {
+      await this.refreshTokenRepository.remove(existingRefreshToken.id);
       throw new UnauthorizedException('Refresh token has expired');
     }
 
-    const accessToken = this.generateAccessToken(refreshToken.user);
+    const { accessToken, refreshToken } = await this.issueTokens(existingRefreshToken.user);
+
+    // Instead of removing, mark as revoked and store the replacement token
+    await this.refreshTokenRepository.updateById(existingRefreshToken.id, {
+      isRevoked: true,
+      revokedAt: new Date(),
+      replacedByToken: refreshToken.hashedToken,
+    });
 
     return {
       message: 'Access token refreshed successfully',
       data: {
         accessToken,
-        user: {
-          id: refreshToken.user.id,
-          username: refreshToken.user.username,
-          email: refreshToken.user.email,
-        },
+        refreshToken: refreshToken.token,
       },
     };
   }
@@ -154,8 +159,9 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token not found');
     }
 
+    const hashedToken = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
     const refreshToken = await this.refreshTokenRepository.findByCondition({
-      token: refreshTokenString,
+      token: hashedToken,
     });
 
     if (!refreshToken) {

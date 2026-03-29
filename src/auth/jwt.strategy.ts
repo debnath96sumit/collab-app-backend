@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '@/common/interfaces/common.interface';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly userRepository: UserRepository,
     readonly configService: ConfigService,
@@ -21,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const { id } = payload;
     const user = await this.userRepository.findOneById(id);
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw new UnauthorizedException('Invalid credentials');
     return user;
   }
 }
