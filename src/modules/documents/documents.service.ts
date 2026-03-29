@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Document } from '@/modules/documents/entities/document.entity';
 import { MailService } from '@/mail/mail.service';
-import { v4 as uuidv4 } from 'uuid';
 import { CreateDocumentDto } from '@/modules/documents/dto/create-document.dto';
 import {
   CollaboratorRole,
@@ -21,6 +20,7 @@ import { InvitationStatus } from '@/modules/invitation/entities/invitation.entit
 import { InvitationRepository } from '@/modules/invitation/repositories/invitation.repository';
 import { ShareDocumentDto } from './dto/share-document.dto';
 import { Not } from 'typeorm';
+import { generateUUID } from '@/common/utils/uuid';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -69,7 +69,7 @@ export class DocumentsService {
     createDocumentDto: CreateDocumentDto,
     userId: number,
   ): Promise<ApiResponse> {
-    const shareToken = uuidv4();
+    const shareToken = await generateUUID();
 
     const savedDocument = await this.documentRepo.create({
       ...createDocumentDto,

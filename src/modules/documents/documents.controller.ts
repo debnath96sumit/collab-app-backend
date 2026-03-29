@@ -10,12 +10,12 @@ import {
   Version,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
-import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 import { ShareDocumentDto } from './dto/share-document.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { ApiBearerAuth, ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { LoginUser } from '@/common/decorator/login-user.decorator';
 import type { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
@@ -25,7 +25,7 @@ export class DocumentsController {
 
   @Version('1')
   @Get('get-my-docs')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
   async getMyDocs(@LoginUser() user: AuthenticatedUser) {
     return await this.documentsService.getMyDocs(user);
@@ -40,7 +40,7 @@ export class DocumentsController {
 
   @Version('1')
   @Post('create')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
   async create(
     @Body() createDocumentDto: CreateDocumentDto,
@@ -61,14 +61,14 @@ export class DocumentsController {
 
   @Version('1')
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
   async remove(@Param('id') id: string) {
     return await this.documentsService.remove(id);
   }
 
   @Version('1')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Post(':id/share')
   @ApiConsumes('application/json')
   async shareDocument(
