@@ -4,14 +4,14 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
+  private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.getOrThrow<string>('MAIL_HOST'),
-      port: 2525,
+      port: Number.parseInt(this.configService.getOrThrow<string>('MAIL_PORT')),
       auth: {
-        user: this.configService.getOrThrow<string>('MAIL_USER'),
+        user: this.configService.getOrThrow<string>('MAIL_USERNAME'),
         pass: this.configService.getOrThrow<string>('MAIL_PASSWORD'),
       },
     });
@@ -23,12 +23,10 @@ export class MailService {
     invitationToken: string,
     inviterName: string,
   ) {
-    const inviteLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/invitation?token=${invitationToken}`;
+    const inviteLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/invitation/accept?token=${invitationToken}`;
 
     const mailOptions = {
-      from:
-        this.configService.getOrThrow<string>('MAIL_FROM') ||
-        '"CollabDocs" <noreply@collabdocs.com>',
+      from: `${this.configService.get('MAIL_FROM_NAME') ?? 'AI Chat'} <${this.configService.get('MAIL_FROM_ADDRESS')}>`,
       to: toEmail,
       subject: `You're invited to collaborate on "${documentTitle}"`,
       html: `
@@ -119,7 +117,7 @@ export class MailService {
                 <p class="document-title">${documentTitle}</p>
               </div>
               
-              <p>Click the button below to accept the invitation and create your account:</p>
+              <p>Click the button below to accept the invitation. If you don't have an account, you'll need to create one first:</p>
               
               <div style="text-align: center;">
                 <a href="${inviteLink}" class="button">Accept Invitation</a>
@@ -165,12 +163,10 @@ export class MailService {
     inviterName: string,
     shareToken: string,
   ) {
-    const documentLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/doc/${shareToken}`;
+    const documentLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/documents/${shareToken}`;
 
     const mailOptions = {
-      from:
-        this.configService.getOrThrow<string>('MAIL_FROM') ||
-        '"CollabDocs" <noreply@collabdocs.com>',
+      from: `${this.configService.get('MAIL_FROM_NAME') ?? 'AI Chat'} <${this.configService.get('MAIL_FROM_ADDRESS')}>`,
       to: toEmail,
       subject: `You've been added to "${documentTitle}"`,
       html: `

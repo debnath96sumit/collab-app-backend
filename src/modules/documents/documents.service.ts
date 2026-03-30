@@ -10,17 +10,19 @@ import { CreateDocumentDto } from '@/modules/documents/dto/create-document.dto';
 import {
   CollaboratorRole,
   CollaboratorStatus,
-} from '@/modules/documents/entities/document-collaborator.entity';
+} from '@/common/enum/common.enum';
 import { ApiResponse } from '@/common/types/api-response.type';
 import { DocumentRepository } from './repositories/document.repository';
 import { UserRepository } from '@/modules/users/user.repository';
 import { DocumentCollaboratorRepository } from './repositories/document-collaborator.repository';
 import { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
-import { InvitationStatus } from '@/modules/invitation/entities/invitation.entity';
-import { InvitationRepository } from '@/modules/invitation/repositories/invitation.repository';
-import { ShareDocumentDto } from './dto/share-document.dto';
 import { Not } from 'typeorm';
 import { generateUUID } from '@/common/utils/uuid';
+import { AddCollaboratorDto } from './dto/share-document.dto';
+import {
+  UpdateDocumentDto,
+  UpdateLinkSettingsDto,
+} from './dto/update-document.dto';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -28,7 +30,6 @@ export class DocumentsService {
     private readonly collaboratorRepository: DocumentCollaboratorRepository,
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
-    private readonly invitationRepo: InvitationRepository,
   ) {}
 
   async getMyDocs(user: AuthenticatedUser): Promise<ApiResponse> {
@@ -75,7 +76,6 @@ export class DocumentsService {
       ...createDocumentDto,
       shareToken,
       owner_id: userId,
-      linkAccess: createDocumentDto.linkAccess || 'public',
     });
 
     if (!savedDocument) {
@@ -97,7 +97,7 @@ export class DocumentsService {
 
   async update(
     id: string,
-    updateData: Partial<Document>,
+    updateData: UpdateDocumentDto,
   ): Promise<ApiResponse> {
     const updatedDocument = await this.documentRepo.updateById(id, updateData);
     if (!updatedDocument) {
@@ -105,7 +105,32 @@ export class DocumentsService {
     }
     return {
       statusCode: 200,
-      message: 'Document updated successfully',
+      message: 'Title updated successfully',
+      data: updatedDocument,
+    };
+  }
+
+  async updateDocSettings(
+    id: string,
+    updateData: UpdateLinkSettingsDto,
+    user: AuthenticatedUser,
+  ): Promise<ApiResponse> {
+    const document = await this.documentRepo.findOneById(id);
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+    if (document.owner_id !== user.id) {
+      throw new ForbiddenException(
+        'You are not authorized to update this document',
+      );
+    }
+    const updatedDocument = await this.documentRepo.updateById(id, updateData);
+    if (!updatedDocument) {
+      throw new NotFoundException('Document not found');
+    }
+    return {
+      statusCode: 200,
+      message: 'Settings updated successfully',
       data: updatedDocument,
     };
   }
@@ -118,110 +143,211 @@ export class DocumentsService {
     return await this.documentRepo.remove(id);
   }
 
-  async shareDocument(
+  async addCollaborator(
     documentId: string,
-    shareDto: ShareDocumentDto,
-    requestUserId: string,
+    addCollaboratorDto: AddCollaboratorDto,
+    user: AuthenticatedUser,
   ): Promise<ApiResponse> {
     const document = await this.findDocumentWithPermission(
       documentId,
-      requestUserId,
-      CollaboratorRole.OWNER,
+      user.id,
+      CollaboratorRole.EDITOR,
     );
 
-    if (!document) {
-      throw new NotFoundException('Document not found');
+    if (addCollaboratorDto.role === CollaboratorRole.OWNER) {
+      throw new BadRequestException(
+        'Cannot assign owner role to a collaborator',
+      );
+    }
+    if (addCollaboratorDto.email === user.email) {
+      throw new BadRequestException(
+        'You cannot add yourself as a collaborator',
+      );
     }
 
-    const inviter = await this.userRepository.findByCondition({
-      id: requestUserId,
-    });
-
-    if (!inviter) {
-      throw new NotFoundException('User not found');
-    }
-    const existingUser = await this.userRepository.findByCondition({
-      email: shareDto.email,
-    });
-
-    if (existingUser) {
-      const existingCollab = await this.collaboratorRepository.findByCondition({
+    const existingCollaborator =
+      await this.collaboratorRepository.findByCondition({
         documentId,
-        userId: existingUser.id,
+        invitedEmail: addCollaboratorDto.email,
       });
 
-      if (existingCollab) {
+    if (existingCollaborator) {
+      if (existingCollaborator.status === CollaboratorStatus.ACTIVE) {
         throw new BadRequestException('User is already a collaborator');
       }
 
-      const collaborator = await this.collaboratorRepository.create({
-        documentId,
-        userId: existingUser.id,
-        role: shareDto.permission,
-        status: CollaboratorStatus.ACTIVE,
-      });
-
-      await this.mailService.sendCollaborationNotification(
-        shareDto.email,
-        document.title,
-        existingUser.username,
-        inviter.username,
-        document.shareToken,
-      );
-
-      return {
-        statusCode: 200,
-        message: 'Invitation sent successfully',
-        data: {
-          id: collaborator.id,
-          email: shareDto.email,
-          name: existingUser.username,
-          role: shareDto.permission,
-          status: CollaboratorStatus.ACTIVE,
-        },
-      };
-    } else {
-      // User doesn't exist - create invitation
-
-      // Check if invitation already exists
-      const existingInvitation = await this.invitationRepo.findByCondition({
-        email: shareDto.email,
-        documentId,
-        status: InvitationStatus.PENDING,
-      });
-
-      if (existingInvitation) {
-        throw new BadRequestException('Invitation already sent to this email');
+      if (
+        existingCollaborator.status === CollaboratorStatus.PENDING &&
+        existingCollaborator.expiresAt &&
+        existingCollaborator.expiresAt > new Date()
+      ) {
+        throw new BadRequestException(
+          'An invitation has already been sent to this email',
+        );
       }
 
-      // Create invitation
-      const invitation = await this.invitationRepo.create({
-        email: shareDto.email,
-        role: shareDto.permission,
+      await this.collaboratorRepository.remove(existingCollaborator.id);
+    }
+
+    const invitedUser = await this.userRepository.findByCondition({
+      email: addCollaboratorDto.email,
+    });
+
+    if (invitedUser) {
+      const collaborator = await this.collaboratorRepository.create({
         documentId,
-        inviterId: requestUserId,
+        userId: invitedUser.id,
+        invitedEmail: addCollaboratorDto.email,
+        role: addCollaboratorDto.role,
+        status: CollaboratorStatus.ACTIVE,
+        joinedAt: new Date(),
       });
 
-      // Send invitation email
-      await this.mailService.sendInvitationEmail(
-        shareDto.email,
-        document.title,
-        invitation.token,
-        inviter.username,
-      );
-
+      try {
+        await this.mailService.sendCollaborationNotification(
+          addCollaboratorDto.email,
+          document.title,
+          invitedUser.username,
+          user.username,
+          document.id,
+        );
+      } catch (error) {
+        console.log(error);
+      }
       return {
-        statusCode: 200,
-        message: 'Invitation sent successfully',
+        statusCode: 201,
+        message: 'Collaborator added successfully',
         data: {
-          id: invitation.id,
-          email: shareDto.email,
-          name: null,
-          role: shareDto.permission,
-          status: 'pending',
+          id: collaborator.id,
+          email: addCollaboratorDto.email,
+          username: invitedUser.username,
+          role: collaborator.role,
+          status: collaborator.status,
         },
       };
     }
+
+    const token = await generateUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const collaborator = await this.collaboratorRepository.create({
+      documentId,
+      invitedEmail: addCollaboratorDto.email,
+      role: addCollaboratorDto.role,
+      status: CollaboratorStatus.PENDING,
+      token,
+      expiresAt,
+    });
+
+    try {
+      await this.mailService.sendInvitationEmail(
+        addCollaboratorDto.email,
+        document.title,
+        token,
+        user.username,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+    return {
+      statusCode: 201,
+      message: 'Invitation sent successfully',
+      data: {
+        id: collaborator.id,
+        email: addCollaboratorDto.email,
+        username: null,
+        role: collaborator.role,
+        status: collaborator.status,
+      },
+    };
+  }
+
+  async acceptInvitation(
+    token: string,
+    user: AuthenticatedUser,
+  ): Promise<ApiResponse> {
+    const collaborator = await this.collaboratorRepository.findByCondition({
+      token,
+      status: CollaboratorStatus.PENDING,
+    });
+    if (!collaborator) {
+      throw new NotFoundException('Invitation not found');
+    }
+    if (!collaborator.expiresAt || collaborator.expiresAt < new Date()) {
+      throw new BadRequestException('Invitation has expired');
+    }
+    if (collaborator.status === CollaboratorStatus.ACTIVE) {
+      throw new BadRequestException('Invitation already accepted');
+    }
+    const updatedCollaborator = await this.collaboratorRepository.updateById(
+      collaborator.id,
+      {
+        userId: user.id,
+        status: CollaboratorStatus.ACTIVE,
+        joinedAt: new Date(),
+        token: null,
+        expiresAt: null,
+      },
+    );
+    return {
+      statusCode: updatedCollaborator ? 200 : 400,
+      message: updatedCollaborator
+        ? 'Invitation accepted successfully'
+        : 'Invitation not accepted',
+      data: updatedCollaborator,
+    };
+  }
+
+  async getCollaborators(
+    documentId: string,
+    user: AuthenticatedUser,
+  ): Promise<ApiResponse> {
+    const document = await this.findDocumentWithPermission(
+      documentId,
+      user.id,
+      CollaboratorRole.VIEWER,
+    );
+    const collaborators = await this.collaboratorRepository.findByCondition({
+      documentId: document.id,
+      status: CollaboratorStatus.ACTIVE,
+    });
+    return {
+      statusCode: 200,
+      message: 'Collaborators fetched successfully',
+      data: collaborators,
+    };
+  }
+
+  async validateInvitation(token: string): Promise<ApiResponse> {
+    const collaborator = await this.collaboratorRepository.findByCondition(
+      {
+        token,
+        status: CollaboratorStatus.PENDING,
+      },
+      {
+        relations: ['document', 'document.owner'],
+      },
+    );
+    if (!collaborator) {
+      throw new NotFoundException('Invitation not found');
+    }
+    if (!collaborator.expiresAt || collaborator.expiresAt < new Date()) {
+      throw new BadRequestException('Invitation has expired');
+    }
+    if (collaborator.status === CollaboratorStatus.ACTIVE) {
+      throw new BadRequestException('Invitation already accepted');
+    }
+    return {
+      statusCode: 200,
+      message: 'Invitation is valid',
+      data: {
+        email: collaborator.invitedEmail,
+        role: collaborator.role,
+        docTitle: collaborator.document.title,
+        inviterName: collaborator.document.owner.username,
+      },
+    };
   }
 
   private async findDocumentWithPermission(
@@ -239,6 +365,12 @@ export class DocumentsService {
       return document;
     }
 
+    if (requiredRole === CollaboratorRole.OWNER) {
+      throw new ForbiddenException(
+        'Only the document owner can perform this action',
+      );
+    }
+
     const collaboration = await this.collaboratorRepository.findByCondition({
       documentId,
       userId,
@@ -250,7 +382,6 @@ export class DocumentsService {
     }
 
     const roleHierarchy = {
-      [CollaboratorRole.OWNER]: 4,
       [CollaboratorRole.EDITOR]: 3,
       [CollaboratorRole.COMMENTER]: 2,
       [CollaboratorRole.VIEWER]: 1,

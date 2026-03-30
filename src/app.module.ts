@@ -7,7 +7,6 @@ import { DocumentProcessor } from '@/queues/document.processor';
 import { AuthModule } from '@/auth/auth.module';
 import { MailModule } from '@/mail/mail.module';
 import { UsersModule } from '@/modules/users/users.module';
-import { InvitationModule } from '@/modules/invitation/invitation.module';
 import { ApiConfigModule } from './config.module';
 import { RedisModule } from './common/redis/redis.module';
 @Module({
@@ -25,7 +24,6 @@ import { RedisModule } from './common/redis/redis.module';
     DocumentsModule,
     CollaborationModule,
     MailModule,
-    InvitationModule,
   ],
   providers: [DocumentProcessor],
 })

@@ -1,3 +1,3 @@
 import { User } from '@/modules/users/user.entity';
 
-export interface AuthenticatedUser extends Pick<User, 'id' | 'username'> {}
+export type AuthenticatedUser = Omit<User, 'password'>;

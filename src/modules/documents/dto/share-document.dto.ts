@@ -1,15 +1,15 @@
 import { IsEmail, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CollaboratorRole } from '../entities/document-collaborator.entity';
+import { CollaboratorRole } from '@/common/enum/common.enum';
 
-export class ShareDocumentDto {
+export class AddCollaboratorDto {
   @ApiProperty()
   @IsEmail()
   email: string;
 
   @ApiProperty({ enum: CollaboratorRole })
   @IsEnum(CollaboratorRole)
-  permission: CollaboratorRole;
+  role: CollaboratorRole;
 }
 
 export class UpdateLinkAccessDto {

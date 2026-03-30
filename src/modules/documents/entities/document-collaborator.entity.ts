@@ -7,18 +7,10 @@ import {
 } from 'typeorm';
 import { Document } from '@/modules/documents/entities/document.entity';
 import { User } from '@/modules/users/user.entity';
-
-export enum CollaboratorRole {
-  OWNER = 'owner',
-  EDITOR = 'editor',
-  COMMENTER = 'commenter',
-  VIEWER = 'viewer',
-}
-
-export enum CollaboratorStatus {
-  ACTIVE = 'active',
-  PENDING = 'pending',
-}
+import {
+  CollaboratorRole,
+  CollaboratorStatus,
+} from '@/common/enum/common.enum';
 
 @Entity('document_collaborators')
 export class DocumentCollaborator {
@@ -55,6 +47,15 @@ export class DocumentCollaborator {
     default: CollaboratorStatus.PENDING,
   })
   status: CollaboratorStatus;
+
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  token: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  joinedAt: Date | null;
 
   @CreateDateColumn()
   invitedAt: Date;

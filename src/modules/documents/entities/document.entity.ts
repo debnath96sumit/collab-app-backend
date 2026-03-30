@@ -8,12 +8,9 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { DocumentVersion } from '@/modules/documents/entities/document-version.entity';
 import { User } from '@/modules/users/user.entity';
-import {
-  CollaboratorRole,
-  DocumentCollaborator,
-} from '@/modules/documents/entities/document-collaborator.entity';
+import { DocumentCollaborator } from '@/modules/documents/entities/document-collaborator.entity';
+import { CollaboratorRole, LinkAccess } from '@/common/enum/common.enum';
 @Entity()
 export class Document {
   @PrimaryGeneratedColumn('uuid')
@@ -31,11 +28,6 @@ export class Document {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => DocumentVersion, (version) => version.document, {
-    cascade: true,
-  })
-  versions: DocumentVersion[];
-
   @ManyToOne(() => User, (user) => user.documents, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'owner_id' })
   owner: User;
@@ -43,8 +35,12 @@ export class Document {
   @Column({ nullable: true })
   owner_id: string;
 
-  @Column({ default: 'restricted' })
-  linkAccess: string;
+  @Column({
+    type: 'enum',
+    enum: LinkAccess,
+    default: LinkAccess.RESTRICTED,
+  })
+  linkAccess: LinkAccess;
 
   @Column({
     type: 'enum',
