@@ -28,4 +28,4 @@ import { InvitationModule } from '@/modules/invitation/invitation.module';
   controllers: [DocumentsController],
   exports: [DocumentsService, TypeOrmModule],
 })
-export class DocumentsModule { }
+export class DocumentsModule {}

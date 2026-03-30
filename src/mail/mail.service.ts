@@ -26,7 +26,9 @@ export class MailService {
     const inviteLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/invitation?token=${invitationToken}`;
 
     const mailOptions = {
-      from: this.configService.getOrThrow<string>('MAIL_FROM') || '"CollabDocs" <noreply@collabdocs.com>',
+      from:
+        this.configService.getOrThrow<string>('MAIL_FROM') ||
+        '"CollabDocs" <noreply@collabdocs.com>',
       to: toEmail,
       subject: `You're invited to collaborate on "${documentTitle}"`,
       html: `
@@ -166,7 +168,9 @@ export class MailService {
     const documentLink = `${this.configService.getOrThrow<string>('FRONTEND_URL')}/doc/${shareToken}`;
 
     const mailOptions = {
-      from: this.configService.getOrThrow<string>('MAIL_FROM') || '"CollabDocs" <noreply@collabdocs.com>',
+      from:
+        this.configService.getOrThrow<string>('MAIL_FROM') ||
+        '"CollabDocs" <noreply@collabdocs.com>',
       to: toEmail,
       subject: `You've been added to "${documentTitle}"`,
       html: `

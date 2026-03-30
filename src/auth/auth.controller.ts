@@ -24,7 +24,7 @@ export class AuthController {
   constructor(
     private userService: UsersService,
     private authService: AuthService,
-  ) { }
+  ) {}
 
   @Version('1')
   @Post('register')

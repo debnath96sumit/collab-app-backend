@@ -29,7 +29,7 @@ export class DocumentsService {
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
     private readonly invitationRepo: InvitationRepository,
-  ) { }
+  ) {}
 
   async getMyDocs(user: AuthenticatedUser): Promise<ApiResponse> {
     const userId = user.id;

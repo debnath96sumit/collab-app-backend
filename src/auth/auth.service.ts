@@ -1,4 +1,9 @@
-import { ConflictException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiResponse } from '@/common/types/api-response.type';
 import { LoginDto, RegisterDto } from '@/auth/dto/auth.dto';
@@ -17,7 +22,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
-  ) { }
+  ) {}
 
   async register(dto: RegisterDto): Promise<ApiResponse> {
     const checkUserExits = await this.userRepo.findByCondition({
@@ -63,7 +68,11 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const { accessToken, refreshToken } = await this.issueTokens(user, userAgent, ipAddress);
+    const { accessToken, refreshToken } = await this.issueTokens(
+      user,
+      userAgent,
+      ipAddress,
+    );
 
     return {
       message: 'Login successful',
@@ -83,7 +92,11 @@ export class AuthService {
       expiresIn: this.configService.getOrThrow('JWT_ACCESS_EXPIRES_IN'),
     });
 
-    const refreshToken = await this.generateRefreshToken(user.id, userAgent, ipAddress);
+    const refreshToken = await this.generateRefreshToken(
+      user.id,
+      userAgent,
+      ipAddress,
+    );
     return { accessToken, refreshToken };
   }
 
@@ -91,9 +104,12 @@ export class AuthService {
     userId: string,
     userAgent?: string,
     ipAddress?: string,
-  ): Promise<{ token: string, expiresAt: Date, hashedToken: string }> {
+  ): Promise<{ token: string; expiresAt: Date; hashedToken: string }> {
     const plainToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(plainToken)
+      .digest('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
@@ -109,14 +125,18 @@ export class AuthService {
   }
 
   async refreshAccessToken(refreshTokenString: string): Promise<ApiResponse> {
-    const hashedToken = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(refreshTokenString)
+      .digest('hex');
 
-    const existingRefreshToken = await this.refreshTokenRepository.findByCondition(
-      { token: hashedToken },
-      {
-        relations: ['user'],
-      },
-    );
+    const existingRefreshToken =
+      await this.refreshTokenRepository.findByCondition(
+        { token: hashedToken },
+        {
+          relations: ['user'],
+        },
+      );
 
     if (!existingRefreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
@@ -126,9 +146,11 @@ export class AuthService {
       // Replay attack detected. Revoke all tokens for this user.
       await this.refreshTokenRepository.updateByField(
         { userId: existingRefreshToken.user.id },
-        { isRevoked: true, revokedAt: new Date() }
+        { isRevoked: true, revokedAt: new Date() },
       );
-      throw new UnauthorizedException('Security alert: Refresh token reuse detected. All sessions revoked.');
+      throw new UnauthorizedException(
+        'Security alert: Refresh token reuse detected. All sessions revoked.',
+      );
     }
 
     if (new Date() > existingRefreshToken.expiresAt) {
@@ -136,7 +158,9 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has expired');
     }
 
-    const { accessToken, refreshToken } = await this.issueTokens(existingRefreshToken.user);
+    const { accessToken, refreshToken } = await this.issueTokens(
+      existingRefreshToken.user,
+    );
 
     // Instead of removing, mark as revoked and store the replacement token
     await this.refreshTokenRepository.updateById(existingRefreshToken.id, {
@@ -159,7 +183,10 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token not found');
     }
 
-    const hashedToken = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(refreshTokenString)
+      .digest('hex');
     const refreshToken = await this.refreshTokenRepository.findByCondition({
       token: hashedToken,
     });

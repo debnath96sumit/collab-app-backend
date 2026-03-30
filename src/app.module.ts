@@ -1,26 +1,24 @@
+import { Redis } from 'ioredis';
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { DocumentsModule } from '@/modules/documents/documents.module';
 import { CollaborationModule } from '@/modules/collaboration/collaboration.module';
 import { DocumentProcessor } from '@/queues/document.processor';
 import { AuthModule } from '@/auth/auth.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailModule } from '@/mail/mail.module';
 import { UsersModule } from '@/modules/users/users.module';
-import { InvitationModule } from './modules/invitation/invitation.module';
+import { InvitationModule } from '@/modules/invitation/invitation.module';
 import { ApiConfigModule } from './config.module';
+import { RedisModule } from './common/redis/redis.module';
 @Module({
   imports: [
     ApiConfigModule,
+    RedisModule,
     BullModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get<string>('BULL_HOST'),
-          port: configService.get<number>('BULL_PORT'),
-        },
+      useFactory: (redis: Redis) => ({
+        connection: redis,
       }),
-      inject: [ConfigService],
+      inject: ['REDIS_CONNECTION'],
     }),
     AuthModule,
     UsersModule,

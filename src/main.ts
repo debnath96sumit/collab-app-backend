@@ -23,7 +23,6 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   if (configService.getOrThrow('NODE_ENV') === 'development') {
-
     const config = new DocumentBuilder()
       .addBearerAuth()
       .setTitle('API documentation')
