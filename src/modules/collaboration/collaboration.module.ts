@@ -1,16 +1,13 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { DocumentsModule } from '@/modules/documents/documents.module';
 import { CollaborationGateway } from './gateway/collaboration.gateway';
 import { CollaborationService } from './collaboration.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersModule } from '@/modules/users/users.module';
+import { QueueModule } from '@/common/queue/queue.module';
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: 'document-edits', // 👈 this must match InjectQueue()
-    }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         privateKey: configService.getOrThrow("JWT_SECRET"),
@@ -21,7 +18,8 @@ import { UsersModule } from '@/modules/users/users.module';
       inject: [ConfigService],
     }),
     DocumentsModule,
-    UsersModule
+    UsersModule,
+    QueueModule,
   ],
   providers: [CollaborationGateway, CollaborationService],
 })

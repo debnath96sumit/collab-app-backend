@@ -1,4 +1,6 @@
 import { InjectQueue } from '@nestjs/bullmq';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { Redis } from 'ioredis';
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -13,6 +15,8 @@ import { Queue } from 'bullmq';
 import { Socket, Server } from 'socket.io';
 import { DocumentsService } from '@/modules/documents/documents.service';
 import { CollaborationService } from '../collaboration.service';
+import { REDIS_CONNECTION } from '@/common/redis/redis.provider';
+import { Inject } from '@nestjs/common';
 
 @WebSocketGateway({
   namespace: "/document-edits",
@@ -26,14 +30,19 @@ export class CollaborationGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+
   constructor(
-    @InjectQueue('document-edits') private editsQueue: Queue,
+    @InjectQueue('document-edit-queue') private editsQueue: Queue,
     private readonly documentsService: DocumentsService,
     private readonly collaborationService: CollaborationService,
+    @Inject(REDIS_CONNECTION) private readonly redis: Redis,
   ) { }
 
-  afterInit() {
-    console.log('WebSocket server initialized');
+  afterInit(server: any) {
+    const pubClient = this.redis;
+    const subClient = pubClient.duplicate();
+    server.server.adapter(createAdapter(pubClient, subClient));
+    console.log('✅ Socket.IO Redis adapter initialized');
   }
 
   async handleConnection(client: Socket) {
@@ -101,11 +110,10 @@ export class CollaborationGateway
       editedBy: user.id,
     });
 
-    await this.editsQueue.add('save-edit', {
-      docId: data.docId,
-      content: data.content,
-      userId: user.id,
-    });
+    await this.editsQueue.add(
+      "save-edit",
+      { docId: data.docId, content: data.content, userId: user.id }
+    );
   }
 
   @SubscribeMessage('renameDocument')

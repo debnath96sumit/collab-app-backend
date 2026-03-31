@@ -25,6 +25,7 @@ import {
   UpdateLinkSettingsDto,
 } from './dto/update-document.dto';
 import { UpdateCollaboratorRoleDto } from './dto/collaborator.dto';
+import { OnEvent } from '@nestjs/event-emitter';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -474,6 +475,23 @@ export class DocumentsService {
       message: 'Document retrieved successfully',
       data: { ...document, accessRole: document.linkPermission },
     };
+  }
+
+  @OnEvent("document.edit.save")
+  async handleDocumentEditSave(data: { docId: string; content: string; userId: string }) {
+    const { docId, content, userId } = data;
+
+    const document = await this.documentRepo.findOneById(docId);
+    console.log(`📝 Processing job for doc ${docId}`);
+
+    if (!document) {
+      throw new Error(`Document ${docId} not found`);
+    }
+
+    document.content = content;
+    await this.documentRepo.updateById(docId, document);
+
+    console.log(`✅ Saved version for doc ${docId}`);
   }
 
   private async findDocumentWithPermission(
