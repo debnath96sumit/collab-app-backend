@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from '@/common/interceptors/response.interceptor';
 import { ConfigService } from '@nestjs/config';
@@ -21,6 +21,9 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   if (configService.getOrThrow('NODE_ENV') === 'development') {
     const config = new DocumentBuilder()

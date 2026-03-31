@@ -8,7 +8,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { UsersService } from '@/modules/users/user.service';
 import { AuthService } from '@/auth/auth.service';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import {
@@ -22,9 +21,8 @@ import {
 @Controller('auth')
 export class AuthController {
   constructor(
-    private userService: UsersService,
     private authService: AuthService,
-  ) {}
+  ) { }
 
   @Version('1')
   @Post('register')
