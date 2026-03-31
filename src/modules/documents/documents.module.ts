@@ -23,6 +23,6 @@ import { DocumentRepository } from './repositories/document.repository';
     DocumentRepository,
   ],
   controllers: [DocumentsController],
-  exports: [DocumentsService, TypeOrmModule],
+  exports: [DocumentsService, TypeOrmModule, DocumentRepository, DocumentCollaboratorRepository],
 })
-export class DocumentsModule {}
+export class DocumentsModule { }

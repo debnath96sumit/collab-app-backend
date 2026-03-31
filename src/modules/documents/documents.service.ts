@@ -10,6 +10,7 @@ import { CreateDocumentDto } from '@/modules/documents/dto/create-document.dto';
 import {
   CollaboratorRole,
   CollaboratorStatus,
+  LinkAccess,
 } from '@/common/enum/common.enum';
 import { ApiResponse } from '@/common/types/api-response.type';
 import { DocumentRepository } from './repositories/document.repository';
@@ -23,6 +24,7 @@ import {
   UpdateDocumentDto,
   UpdateLinkSettingsDto,
 } from './dto/update-document.dto';
+import { UpdateCollaboratorRoleDto } from './dto/collaborator.dto';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -30,7 +32,7 @@ export class DocumentsService {
     private readonly collaboratorRepository: DocumentCollaboratorRepository,
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
-  ) {}
+  ) { }
 
   async getMyDocs(user: AuthenticatedUser): Promise<ApiResponse> {
     const userId = user.id;
@@ -347,6 +349,130 @@ export class DocumentsService {
         docTitle: collaborator.document.title,
         inviterName: collaborator.document.owner.username,
       },
+    };
+  }
+
+  async updateCollaboratorRole(
+    documentId: string,
+    collabId: string,
+    dto: UpdateCollaboratorRoleDto,
+    user: AuthenticatedUser,
+  ): Promise<ApiResponse> {
+    await this.findDocumentWithPermission(
+      documentId,
+      user.id,
+      CollaboratorRole.OWNER,
+    );
+
+    const collaborator = await this.collaboratorRepository.findByCondition({
+      id: collabId,
+      documentId,
+    });
+
+    if (!collaborator) {
+      throw new NotFoundException('Collaborator not found');
+    }
+
+    if (collaborator.status !== CollaboratorStatus.ACTIVE) {
+      throw new BadRequestException('Cannot update role of a pending collaborator');
+    }
+
+    const updated = await this.collaboratorRepository.updateById(collabId, {
+      role: dto.role,
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Collaborator role updated successfully',
+      data: updated,
+    };
+  }
+
+  async removeCollaborator(
+    documentId: string,
+    collabId: string,
+    user: AuthenticatedUser,
+  ): Promise<ApiResponse> {
+    const document = await this.findDocumentWithPermission(
+      documentId,
+      user.id,
+      CollaboratorRole.OWNER,
+    );
+
+    const collaborator = await this.collaboratorRepository.findByCondition({
+      id: collabId,
+      documentId,
+    });
+
+    if (!collaborator) {
+      throw new NotFoundException('Collaborator not found');
+    }
+
+    if (collaborator.userId === user.id) {
+      await this.collaboratorRepository.remove(collabId);
+      return {
+        statusCode: 200,
+        message: 'You have left the document',
+        data: null,
+      };
+    }
+    if (document.owner_id !== user.id) {
+      throw new ForbiddenException('Only the owner can remove collaborators');
+    }
+
+    await this.collaboratorRepository.remove(collabId);
+
+    return {
+      statusCode: 200,
+      message: 'Collaborator removed successfully',
+      data: null,
+    };
+  }
+
+  async getDocumentByShareToken(
+    shareToken: string,
+    user?: AuthenticatedUser,
+  ): Promise<ApiResponse> {
+    const document = await this.documentRepo.findByCondition({ shareToken });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    if (user && document.owner_id === user.id) {
+      return {
+        statusCode: 200,
+        message: 'Document retrieved successfully',
+        data: document,
+      };
+    }
+
+    if (user) {
+      const collaborator = await this.collaboratorRepository.findByCondition({
+        documentId: document.id,
+        userId: user.id,
+        status: CollaboratorStatus.ACTIVE,
+      });
+
+      if (collaborator) {
+        return {
+          statusCode: 200,
+          message: 'Document retrieved successfully',
+          data: { ...document, accessRole: collaborator.role },
+        };
+      }
+    }
+
+    if (document.linkAccess === LinkAccess.RESTRICTED) {
+      throw new ForbiddenException(
+        'This document is restricted. Request access from the owner.',
+      );
+    }
+
+    return {
+      statusCode: 200,
+      message: 'Document retrieved successfully',
+      data: { ...document, accessRole: document.linkPermission },
     };
   }
 

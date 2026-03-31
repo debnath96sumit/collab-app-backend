@@ -21,12 +21,13 @@ import {
   UpdateDocumentDto,
   UpdateLinkSettingsDto,
 } from './dto/update-document.dto';
+import { UpdateCollaboratorRoleDto } from './dto/collaborator.dto';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
 @Controller('documents')
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(private readonly documentsService: DocumentsService) { }
 
   @Version('1')
   @Get('get-my-docs')
@@ -74,7 +75,7 @@ export class DocumentsController {
   }
 
   @Version('1')
-  @Delete(':id')
+  @Delete(':id/delete')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
@@ -128,5 +129,47 @@ export class DocumentsController {
   @ApiConsumes('application/json')
   async validateInvitation(@Param('token') token: string) {
     return await this.documentsService.validateInvitation(token);
+  }
+
+  @Version('1')
+  @Patch(':id/collaborators/:collaboratorId')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiConsumes('application/json')
+  async updateCollaboratorRole(
+    @Param('id') id: string,
+    @Param('collaboratorId') collaboratorId: string,
+    @Body() updateDto: UpdateCollaboratorRoleDto,
+    @LoginUser() user: AuthenticatedUser,
+  ) {
+    return await this.documentsService.updateCollaboratorRole(
+      id,
+      collaboratorId,
+      updateDto,
+      user,
+    );
+  }
+
+  @Version('1')
+  @Delete(':id/collaborators/:collabId')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiConsumes('application/json')
+  async removeCollaborator(
+    @Param('id') documentId: string,
+    @Param('collabId') collabId: string,
+    @LoginUser() user: AuthenticatedUser,
+  ) {
+    return this.documentsService.removeCollaborator(documentId, collabId, user);
+  }
+
+  @Version('1')
+  @Get('shared/:shareToken')
+  @ApiConsumes('application/json')
+  async getDocumentByShareToken(
+    @Param('shareToken') shareToken: string,
+    @LoginUser() user?: AuthenticatedUser,
+  ) {
+    return this.documentsService.getDocumentByShareToken(shareToken, user);
   }
 }
