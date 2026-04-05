@@ -6,16 +6,18 @@ import {
   HttpCode,
   Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from '@/auth/auth.service';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import {
   LoginDto,
   LogoutDto,
   RefreshTokenDto,
   RegisterDto,
 } from '@/auth/dto/auth.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -59,14 +61,10 @@ export class AuthController {
 
   @Version('1')
   @Post('logout')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
-  async logout(@Body() body: LogoutDto) {
-    const refreshToken = body.refreshToken;
-
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token not found');
-    }
-
-    return await this.authService.logout(refreshToken);
+  async logout(@Body() body: LogoutDto, @Req() req: Request) {
+    return await this.authService.logout(body.refreshToken, req);
   }
 }

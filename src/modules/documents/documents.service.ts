@@ -47,7 +47,7 @@ export class DocumentsService {
         role: Not(CollaboratorRole.OWNER),
       },
       {
-        relations: ['document'],
+        relations: ['document', 'document.owner'],
       },
     );
     return {

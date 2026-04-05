@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpStatus,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -14,6 +16,9 @@ import { ConfigService } from '@nestjs/config';
 import { UserRole } from '@/common/enum/user-role.enum';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { REDIS_CONNECTION } from '@/common/redis/redis.provider';
+import { Redis } from 'ioredis';
+import { Request } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +27,9 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
-  ) {}
+    @Inject(REDIS_CONNECTION)
+    private readonly redisService: Redis,
+  ) { }
 
   async register(dto: RegisterDto): Promise<ApiResponse> {
     const checkUserExits = await this.userRepo.findByCondition({
@@ -178,7 +185,13 @@ export class AuthService {
     };
   }
 
-  async logout(refreshTokenString: string): Promise<ApiResponse> {
+  async logout(refreshTokenString: string, req: Request): Promise<ApiResponse> {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      throw new BadRequestException("No token provided.");
+    }
     if (!refreshTokenString) {
       throw new UnauthorizedException('Refresh token not found');
     }
@@ -195,14 +208,30 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
+    const decoded = this.jwtService.decode(token) as { exp: number } | null;
+    if (!decoded?.exp) {
+      throw new BadRequestException('Invalid token format');
+    }
+
+    const blacklistAccessToken = async () => {
+      const remainingTtl = decoded.exp - Math.floor(Date.now() / 1000);
+      if (remainingTtl > 0) {
+        await this.redisService.set(`blacklist:${token}`, '1', 'EX', remainingTtl);
+      }
+    };
+
     if (refreshToken.isRevoked) {
+      await blacklistAccessToken();
       throw new UnauthorizedException('Refresh token has been revoked');
     }
 
     if (new Date() > refreshToken.expiresAt) {
+      await blacklistAccessToken();
       await this.refreshTokenRepository.remove(refreshToken.id);
       throw new UnauthorizedException('Refresh token has expired');
     }
+
+    await blacklistAccessToken();
 
     await this.refreshTokenRepository.updateById(refreshToken.id, {
       isRevoked: true,
