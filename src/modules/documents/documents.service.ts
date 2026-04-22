@@ -39,7 +39,11 @@ export class DocumentsService {
     const userId = user.id;
     const myDocs = await this.documentRepo.findAllByCondition({
       owner_id: userId,
-    });
+    }, 
+    {
+      relations: ['owner']
+    }
+  );
     const sharedWithMe = await this.collaboratorRepository.findAllByCondition(
       {
         userId,
@@ -311,7 +315,7 @@ export class DocumentsService {
       user.id,
       CollaboratorRole.VIEWER,
     );
-    const collaborators = await this.collaboratorRepository.findByCondition({
+    const collaborators = await this.collaboratorRepository.findAllByCondition({
       documentId: document.id,
       status: CollaboratorStatus.ACTIVE,
     });
