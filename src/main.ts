@@ -4,9 +4,11 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from '@/common/interceptors/response.interceptor';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'node:path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
   app.enableCors({
@@ -21,6 +23,8 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+
   app.enableVersioning({
     type: VersioningType.URI,
   });
