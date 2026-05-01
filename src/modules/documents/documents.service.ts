@@ -260,13 +260,7 @@ export class DocumentsService {
     return {
       statusCode: 201,
       message: 'Invitation sent successfully',
-      data: {
-        id: collaborator.id,
-        email: addCollaboratorDto.email,
-        username: null,
-        role: collaborator.role,
-        status: collaborator.status,
-      },
+      data: collaborator,
     };
   }
 
@@ -315,14 +309,24 @@ export class DocumentsService {
       user.id,
       CollaboratorRole.VIEWER,
     );
+
     const collaborators = await this.collaboratorRepository.findAllByCondition({
       documentId: document.id,
-      status: CollaboratorStatus.ACTIVE,
-    });
+    }, {
+        relations: ['user']
+      }
+    );
+    
+    const active = collaborators.filter(
+      (c) => c.status === CollaboratorStatus.ACTIVE,
+    );
+    const pending = collaborators.filter(
+      (c) => c.status === CollaboratorStatus.PENDING,
+    );
     return {
       statusCode: 200,
       message: 'Collaborators fetched successfully',
-      data: collaborators,
+      data: { active, pending },
     };
   }
 

@@ -12,6 +12,8 @@ import { CollaboratorStatus, LinkAccess } from '@/common/enum/common.enum';
 interface PresenceUser {
     userId: string;
     username: string;
+    avatarUrl: string;
+    fullName: string;
     socketId: string;
     joinedAt: Date;
 }
@@ -86,11 +88,12 @@ export class CollaborationService {
         this.presence.get(docId)!.set(user.id, {
             userId: user.id,
             username: user.username,
+            fullName: user.fullName,
+            avatarUrl: user.avatarUrl,
             socketId,
             joinedAt: new Date(),
         });
     }
-
     removeFromPresence(docId: string, userId: string): void {
         if (!this.presence.has(docId)) return;
 

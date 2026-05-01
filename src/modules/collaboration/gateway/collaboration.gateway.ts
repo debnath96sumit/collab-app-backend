@@ -118,15 +118,15 @@ export class CollaborationGateway
 
   @SubscribeMessage('renameDocument')
   async handleRename(
-    @MessageBody() data: { docId: string; name: string },
+    @MessageBody() data: { docId: string; newTitle: string },
     @ConnectedSocket() client: Socket,
   ) {
     const user = client.data.user;
 
-    await this.documentsService.update(data.docId, { title: data.name });
+    await this.documentsService.update(data.docId, { title: data.newTitle });
 
     client.to(data.docId).emit('documentRenamed', {
-      name: data.name,
+      newTitle: data.newTitle,
       renamedBy: user.id,
     });
   }
