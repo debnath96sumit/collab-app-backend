@@ -165,4 +165,33 @@ export class CollaborationGateway
       socketId: client.id,
     });
   }
+
+  @SubscribeMessage('typing-start')
+  handleTypingStart(
+    @MessageBody() payload: { documentId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = client.data.user;
+
+    client.to(payload.documentId).emit('user-typing', {
+      userId: user.id,
+      username: user.username,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl ?? null,
+      isTyping: true,
+    });
+  }
+
+  @SubscribeMessage('typing-stop')
+  handleTypingStop(
+    @MessageBody() payload: { documentId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = client.data.user;
+
+    client.to(payload.documentId).emit('user-typing', {
+      userId: user.id,
+      isTyping: false,
+    });
+  }
 }

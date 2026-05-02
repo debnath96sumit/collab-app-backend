@@ -95,10 +95,15 @@ export class DocumentsService {
       status: CollaboratorStatus.ACTIVE,
     });
 
+    const getNewDoc = await this.documentRepo.findByCondition({
+      id: savedDocument.id
+    }, {
+      relations: ['owner']
+    })
     return {
       statusCode: 201,
       message: 'Document created successfully',
-      data: savedDocument,
+      data: getNewDoc,
     };
   }
 
@@ -142,12 +147,25 @@ export class DocumentsService {
     };
   }
 
-  async remove(id: string) {
+  async remove(
+    id: string,
+    user: AuthenticatedUser
+  ): Promise<ApiResponse> {
+    if(!user) throw new BadRequestException('User Not Found');
     const doc = await this.documentRepo.findOneById(id);
     if (!doc) {
       throw new NotFoundException('Document not found');
     }
-    return await this.documentRepo.remove(id);
+
+    if (doc.owner_id !== user.id) {
+      throw new BadRequestException('Invalid access');
+    }
+    const result = await this.documentRepo.remove(id);
+
+    return {
+      statusCode: result ? 200 : 404,
+      message: result ? 'Document Deleted Successfully' : 'Something went wrong'
+    }
   }
 
   async addCollaborator(

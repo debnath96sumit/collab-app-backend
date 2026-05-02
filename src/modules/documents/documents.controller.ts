@@ -65,12 +65,14 @@ export class DocumentsController {
 
   @Version('1')
   @Patch(':id/settings')
+    @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
   async updateDocSettings(
     @Param('id') id: string,
     @Body() updateDto: UpdateLinkSettingsDto,
     @LoginUser() user: AuthenticatedUser,
-  ) {
+  ) { 
     return await this.documentsService.updateDocSettings(id, updateDto, user);
   }
 
@@ -79,8 +81,8 @@ export class DocumentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiConsumes('application/json')
-  async remove(@Param('id') id: string) {
-    return await this.documentsService.remove(id);
+  async remove(@Param('id') id: string, @LoginUser() user: AuthenticatedUser) {
+    return await this.documentsService.remove(id, user);
   }
 
   @Version('1')
