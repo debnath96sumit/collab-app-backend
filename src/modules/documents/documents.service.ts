@@ -26,6 +26,7 @@ import {
 } from './dto/update-document.dto';
 import { UpdateCollaboratorRoleDto } from './dto/collaborator.dto';
 import { OnEvent } from '@nestjs/event-emitter';
+import { DocumentCollaborator } from './entities/document-collaborator.entity';
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -218,8 +219,9 @@ export class DocumentsService {
       email: addCollaboratorDto.email,
     });
 
+    let collaborator: DocumentCollaborator;
     if (invitedUser) {
-      const collaborator = await this.collaboratorRepository.create({
+      collaborator = await this.collaboratorRepository.create({
         documentId,
         userId: invitedUser.id,
         invitedEmail: addCollaboratorDto.email,
@@ -239,46 +241,41 @@ export class DocumentsService {
       } catch (error) {
         console.log(error);
       }
-      return {
-        statusCode: 201,
-        message: 'Collaborator added successfully',
-        data: {
-          id: collaborator.id,
-          email: addCollaboratorDto.email,
-          username: invitedUser.username,
-          role: collaborator.role,
-          status: collaborator.status,
-        },
-      };
-    }
-
-    const token = await generateUUID();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    const collaborator = await this.collaboratorRepository.create({
-      documentId,
-      invitedEmail: addCollaboratorDto.email,
-      role: addCollaboratorDto.role,
-      status: CollaboratorStatus.PENDING,
-      token,
-      expiresAt,
-    });
-
-    try {
-      await this.mailService.sendInvitationEmail(
-        addCollaboratorDto.email,
-        document.title,
+    } else {
+      const token = await generateUUID();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+  
+      collaborator = await this.collaboratorRepository.create({
+        documentId,
+        invitedEmail: addCollaboratorDto.email,
+        role: addCollaboratorDto.role,
+        status: CollaboratorStatus.PENDING,
         token,
-        user.username,
-      );
-    } catch (error) {
-      console.log(error);
+        expiresAt,
+      });
+  
+      try {
+        await this.mailService.sendInvitationEmail(
+          addCollaboratorDto.email,
+          document.title,
+          token,
+          user.username,
+        );
+      } catch (error) {
+        console.log(error);
+      }
     }
+    const fullCollabDetails = await this.collaboratorRepository.findAllByCondition({
+      id: collaborator.id
+    }, {
+        relations: ['user']
+      }
+    );
     return {
       statusCode: 201,
       message: 'Invitation sent successfully',
-      data: collaborator,
+      data: fullCollabDetails,
     };
   }
 
